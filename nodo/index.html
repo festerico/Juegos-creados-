@@ -73,11 +73,13 @@
     will-change:transform;
   }
   .powerline{
-    display:flex;justify-content:space-between;
+    display:flex;justify-content:space-between;align-items:flex-start;
     font-family:'Consolas','Courier New',monospace;
     font-size:11px;color:var(--text-dim);margin-bottom:14px;
+    min-height:30px;
   }
   .powerline b{color:var(--amber);font-weight:700;}
+  #msg{max-width:56%;}
 
   #grid{
     display:grid;
