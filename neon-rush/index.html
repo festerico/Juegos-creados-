@@ -88,6 +88,36 @@
     50% { background-position: 100% 0; transform: translateX(-50%) scale(1.06); }
     100% { background-position: 0% 0; transform: translateX(-50%) scale(1); }
   }
+  #bossBanner {
+    position: absolute; top: 70px; left: 50%; transform: translateX(-50%);
+    font-size: 14px; font-weight: 800; letter-spacing: 2px;
+    color: #fff; padding: 6px 18px; border-radius: 20px;
+    background: linear-gradient(90deg, #8fd6ff, #c77dff, #8fd6ff);
+    background-size: 200% 100%;
+    box-shadow: 0 0 20px rgba(140,180,255,0.6);
+    animation: overdrivePulse 0.7s linear infinite;
+    pointer-events: none;
+  }
+  #bossHud {
+    position: absolute; top: 66px; left: 50%; transform: translateX(-50%);
+    width: min(320px, 78vw);
+    color: #eafcff; text-align: center; pointer-events: none;
+  }
+  #bossTitle {
+    font-size: 12px; letter-spacing: .3px; margin-bottom: 5px;
+    text-shadow: 0 0 8px rgba(255,209,102,0.5);
+  }
+  #bossTitle b { color: #fff; }
+  #bossTitle .artifact { color: #ffd166; font-weight: 700; }
+  .bossbar-wrap {
+    height: 9px; border-radius: 6px; overflow: hidden;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.22);
+  }
+  .bossbar {
+    height: 100%; width: 100%;
+    background: linear-gradient(90deg, #ffd166, #ff5c3d);
+    transition: width .15s ease;
+  }
   .overlay {
     position: absolute; inset: 0;
     background: rgba(5,5,10,0.88);
@@ -170,11 +200,16 @@
   <button id="pauseBtn" class="hidden">❚❚</button>
   <button id="shootBtn" class="hidden">DISPARAR</button>
   <div id="overdriveBanner" class="hidden">¡A TODA VELOCIDAD! x2</div>
+  <div id="bossBanner" class="hidden">⚠ JEFE APROXIMÁNDOSE ⚠</div>
+  <div id="bossHud" class="hidden">
+    <div id="bossTitle"></div>
+    <div class="bossbar-wrap"><div class="bossbar" id="bossBar"></div></div>
+  </div>
   <div id="whoami"><span class="whoami-label">jugando como <b id="whoamiName"></b></span><a id="switchUserLink">🔄 cambiar</a><a id="homeLink">🏠 menú</a></div>
 
   <div id="startScreen" class="overlay">
     <div class="title">NEON RUSH</div>
-    <div class="subtitle">Esquivá los picos rojos (mirá el aviso ⌄ antes de que aparezcan) y recolectá orbes cian y dorados. Los orbes blancos "chispa" caen rápido y valen el triple: hay que reaccionar ya. De vez en cuando el juego entra en modo overdrive: todo se acelera y los puntos valen el doble. La bolita roja te carga un disparo (botón DISPARAR o espacio) para destruir un pico.</div>
+    <div class="subtitle">Esquivá los picos rojos (mirá el aviso ⌄ antes de que aparezcan) y recolectá orbes cian y dorados. Los orbes blancos "chispa" caen rápido y valen el triple: hay que reaccionar ya. De vez en cuando el juego entra en modo overdrive: todo se acelera y los puntos valen el doble. La bolita roja te carga un disparo (botón DISPARAR o espacio). Cada tanto vas a ver un planeta bajando desde arriba: cuando llega a la mitad de la pantalla, aparece un jefe. Su cuerpo te hace daño si lo tocás — dispará a su artefacto (el brillo dorado en el centro) para destruirlo.</div>
     <button id="startBtn" class="action">COMENZAR</button>
     <div class="hint">Mové el mouse o el dedo · flechas / A-D también funcionan · Espacio para disparar</div>
   </div>
@@ -365,6 +400,80 @@ let overdriveCooldown = 0; // frames hasta que pueda activarse de nuevo
 function curSpeedMul() { return speedMul * (overdrive > 0 ? 1.5 : 1); }
 function scoreMul() { return overdrive > 0 ? 2 : 1; }
 
+// ============================================================
+// Jefes: cada tanto, un ser marino "espacial" baja y hay que
+// destruirle el artefacto que lo mantiene en el espacio.
+// ============================================================
+const BOSS_TYPES = [
+  { key:'shark',    name:'Tiburón espacial',   color:'#8fd6ff', artifact:'casco',   artifactColor:'#ffd166', hp:6 },
+  { key:'octopus',  name:'Pulpo espacial',     color:'#c77dff', artifact:'cápsula', artifactColor:'#ffd166', hp:7 },
+  { key:'squid',    name:'Calamar espacial',   color:'#ff6fb0', artifact:'tanque',  artifactColor:'#ffd166', hp:6 },
+  { key:'seahorse', name:'Caballito espacial', color:'#7fffb0', artifact:'burbuja', artifactColor:'#ffd166', hp:5 },
+  { key:'orca',     name:'Orca espacial',      color:'#eafcff', artifact:'máscara', artifactColor:'#ffd166', hp:8 }
+];
+
+const bossBanner = document.getElementById('bossBanner');
+const bossHud = document.getElementById('bossHud');
+const bossTitleEl = document.getElementById('bossTitle');
+const bossBarEl = document.getElementById('bossBar');
+
+let boss = null;           // jefe activo en pantalla, o null
+let bossApproach = null;   // "planeta" acercándose antes de que aparezca el jefe
+let bossIndex = 0;         // qué jefe del ciclo sigue
+let bossGap = 480;         // separación de puntaje entre jefes, crece un poco cada vez
+let nextBossScore = 480;   // puntaje al que se dispara el próximo acercamiento
+let bossInvuln = 0;        // frames de gracia tras chocar contra el cuerpo del jefe
+
+function hexToRgb(hex) {
+  const n = parseInt(hex.replace('#',''), 16);
+  return `${(n>>16)&255},${(n>>8)&255},${n&255}`;
+}
+
+function startBossApproach() {
+  bossApproach = { y: -60, speed: 1.1 };
+  bossBanner.classList.remove('hidden');
+}
+
+function spawnBoss() {
+  const type = BOSS_TYPES[bossIndex % BOSS_TYPES.length];
+  bossIndex++;
+  boss = {
+    type,
+    x: W/2, y: -100,
+    homeY: H * 0.26,
+    r: 46,
+    artifactR: 20,
+    hp: type.hp, maxHp: type.hp,
+    phase: 'entering',
+    t: 0,
+    hitFlash: 0
+  };
+  bossApproach = null;
+  bossInvuln = 0;
+  bossBanner.classList.add('hidden');
+  bossHud.classList.remove('hidden');
+  bossTitleEl.innerHTML = '<b>' + type.name + '</b> · destruí su <span class="artifact">' + type.artifact + '</span>';
+  updateBossBar();
+}
+
+function updateBossBar() {
+  const pct = Math.max(0, boss.hp / boss.maxHp) * 100;
+  bossBarEl.style.width = pct + '%';
+}
+
+function defeatBoss() {
+  burst(boss.x, boss.y, hexToRgb(boss.type.artifactColor), 30);
+  burst(boss.x, boss.y, hexToRgb(boss.type.color), 30);
+  score += 260 + bossIndex * 40;
+  scoreEl.textContent = Math.floor(score);
+  shake = Math.max(shake, 18);
+  bossHud.classList.add('hidden');
+  boss = null;
+  bossGap = Math.round(bossGap * 1.18);
+  nextBossScore = score + bossGap;
+  speedMul += 0.12; // cada jefe superado sube un poco el piso de dificultad para lo que sigue
+}
+
 function initGame() {
   player = { x: W/2, y: H - 90, r: 16, vx: 0, tilt: 0, trailTimer: 0 };
   obstacles = [];
@@ -376,7 +485,7 @@ function initGame() {
   score = 0;
   lives = 3;
   combo = 1;
-  speedMul = 1;
+  speedMul = 1.3; // arranca ~30% más rápido/denso que antes, ya no es un juego "de calentamiento"
   spawnTimer = 0;
   powerupTimer = 220;
   reflexTimer = 220;
@@ -385,6 +494,12 @@ function initGame() {
   ammo = 0;
   shake = 0;
   targetX = W/2;
+  boss = null;
+  bossApproach = null;
+  bossIndex = 0;
+  bossGap = 480;
+  nextBossScore = bossGap;
+  bossInvuln = 0;
   updateLives();
   updateAmmo();
   scoreEl.textContent = '0';
@@ -392,6 +507,8 @@ function initGame() {
   ammoEl.classList.remove('hidden');
   shootBtn.classList.remove('hidden');
   overdriveBanner.classList.add('hidden');
+  bossBanner.classList.add('hidden');
+  bossHud.classList.add('hidden');
 }
 
 function updateAmmo() {
@@ -534,6 +651,8 @@ function gameOver() {
   ammoEl.classList.add('hidden');
   shootBtn.classList.add('hidden');
   overdriveBanner.classList.add('hidden');
+  bossBanner.classList.add('hidden');
+  bossHud.classList.add('hidden');
   if (score > bestScore) bestScore = score;
   finalScoreEl.textContent = Math.floor(score);
   bestScoreEl.textContent = 'Mejor puntaje: ' + Math.floor(bestScore);
@@ -557,7 +676,13 @@ function loop(t) {
 function update(dt) {
   speedMul += 0.00022 * dt;
 
+  // ¿toca acercamiento de jefe? (no se solapa con uno ya en curso)
+  if (!boss && !bossApproach && score >= nextBossScore) {
+    startBossApproach();
+  }
+
   // modo overdrive: ráfagas cortas y periódicas de velocidad + puntaje doble
+  // (se suspende durante la secuencia de jefe para no acumular caos)
   if (overdrive > 0) {
     overdrive -= dt;
     if (overdrive <= 0) {
@@ -565,7 +690,7 @@ function update(dt) {
       overdriveCooldown = 480 + Math.random() * 260;
       overdriveBanner.classList.add('hidden');
     }
-  } else {
+  } else if (!boss && !bossApproach) {
     overdriveCooldown -= dt;
     if (overdriveCooldown <= 0) {
       overdrive = 190 + Math.random() * 50;
@@ -602,22 +727,53 @@ function update(dt) {
     });
   }
 
-  spawnTimer -= dt;
-  if (spawnTimer <= 0) {
-    spawnWave();
-    spawnTimer = Math.max(46, 66 - speedMul * 6) * (overdrive > 0 ? 0.55 : 1);
+  // durante el acercamiento del jefe y la pelea, se corta el spawn normal
+  // para que la pantalla quede despejada y el foco sea el jefe
+  if (!boss && !bossApproach) {
+    spawnTimer -= dt;
+    if (spawnTimer <= 0) {
+      spawnWave();
+      spawnTimer = Math.max(46, 66 - speedMul * 6) * (overdrive > 0 ? 0.55 : 1);
+    }
+
+    powerupTimer -= dt;
+    if (powerupTimer <= 0) {
+      powerups.push(makePowerup());
+      powerupTimer = 260 + Math.random() * 180; // cada tanto, no muy seguido
+    }
+
+    reflexTimer -= dt;
+    if (reflexTimer <= 0) {
+      orbs.push(makeReflexOrb(40 + Math.random() * (W - 80)));
+      reflexTimer = 300 + Math.random() * 260;
+    }
   }
 
-  powerupTimer -= dt;
-  if (powerupTimer <= 0) {
-    powerups.push(makePowerup());
-    powerupTimer = 260 + Math.random() * 180; // cada tanto, no muy seguido
+  // planeta acercándose: crece y baja hasta la mitad de pantalla, ahí aparece el jefe
+  if (bossApproach) {
+    bossApproach.y += bossApproach.speed * dt;
+    if (bossApproach.y >= H * 0.5) spawnBoss();
   }
 
-  reflexTimer -= dt;
-  if (reflexTimer <= 0) {
-    orbs.push(makeReflexOrb(40 + Math.random() * (W - 80)));
-    reflexTimer = 300 + Math.random() * 260;
+  // jefe activo: entra, se mueve en patrón, y choca como un pico si tocás su cuerpo
+  if (boss) {
+    boss.t += dt;
+    if (bossInvuln > 0) bossInvuln -= dt;
+    if (boss.hitFlash > 0) boss.hitFlash -= dt;
+
+    if (boss.phase === 'entering') {
+      boss.y += 2.4 * dt;
+      if (boss.y >= boss.homeY) { boss.y = boss.homeY; boss.phase = 'fighting'; }
+    } else {
+      boss.x = W/2 + Math.sin(boss.t * 0.018) * (W * 0.28);
+      boss.y = boss.homeY + Math.sin(boss.t * 0.03) * 14;
+    }
+
+    const distPlayer = Math.hypot(boss.x - player.x, boss.y - player.y);
+    if (bossInvuln <= 0 && distPlayer < boss.r + player.r - 6) {
+      bossInvuln = 90;
+      loseLife();
+    }
   }
 
   for (let i = warnings.length - 1; i >= 0; i--) {
@@ -698,6 +854,27 @@ function update(dt) {
         break;
       }
     }
+    if (!hit && boss && boss.phase === 'fighting') {
+      const dArt = Math.hypot(boss.x - b.x, boss.y - b.y);
+      if (dArt < boss.artifactR + 6) {
+        // le pegó al artefacto: ahí sí duele
+        boss.hp--;
+        boss.hitFlash = 10;
+        burst(b.x, b.y, hexToRgb(boss.type.artifactColor), 14);
+        score += 20 * combo * scoreMul();
+        scoreEl.textContent = Math.floor(score);
+        hit = true;
+        if (boss.hp <= 0) {
+          defeatBoss();
+        } else {
+          updateBossBar();
+        }
+      } else if (dArt < boss.r) {
+        // le pegó al cuerpo, no al artefacto: rebota sin hacer daño
+        burst(b.x, b.y, hexToRgb(boss.type.color), 6);
+        hit = true;
+      }
+    }
     if (hit) bullets.splice(i, 1);
   }
 
@@ -727,6 +904,28 @@ function draw() {
   const gridOffset = (tPrev/1000 * 40 * (state==='playing'?speedMul:0)) % 60;
   for (let y = -60 + gridOffset; y < H; y += 60) {
     ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+  }
+
+  // planeta acercándose: aviso grande de que un jefe está por llegar
+  if (bossApproach) {
+    const target = H * 0.5;
+    const progress = Math.max(0, Math.min(1, (bossApproach.y + 60) / (target + 60)));
+    const r = 20 + progress * 90;
+    ctx.save();
+    ctx.globalAlpha = 0.3 + progress * 0.5;
+    ctx.beginPath();
+    ctx.arc(W/2, bossApproach.y, r, 0, Math.PI*2);
+    ctx.strokeStyle = '#ffd166';
+    ctx.lineWidth = 3;
+    ctx.shadowColor = '#ffd166';
+    ctx.shadowBlur = 24;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(W/2, bossApproach.y, r * 0.6, 0, Math.PI*2);
+    ctx.lineWidth = 1.5;
+    ctx.globalAlpha *= 0.6;
+    ctx.stroke();
+    ctx.restore();
   }
 
   // señales de advertencia: aviso breve arriba, antes de que el pico entre en pantalla
@@ -818,6 +1017,12 @@ function draw() {
     ctx.stroke();
   }
 
+  // jefe: cuerpo (bloquea el paso) + artefacto (lo que hay que destruir)
+  if (boss) {
+    drawBossBody(boss);
+    drawBossArtifact(boss);
+  }
+
   // bullets
   for (const b of bullets) {
     ctx.beginPath();
@@ -903,6 +1108,142 @@ function draw() {
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, H);
   }
+}
+
+function drawBossBody(b) {
+  const type = b.type;
+  const r = b.r;
+  ctx.save();
+  ctx.translate(b.x, b.y);
+  ctx.fillStyle = b.hitFlash > 0 ? '#ffffff' : type.color;
+  ctx.shadowColor = type.color;
+  ctx.shadowBlur = 22;
+
+  if (type.key === 'shark') {
+    ctx.beginPath();
+    ctx.moveTo(0, -r*1.1);
+    ctx.quadraticCurveTo(r*1.1, 0, 0, r*0.95);
+    ctx.quadraticCurveTo(-r*1.1, 0, 0, -r*1.1);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(-r*0.15, -r*0.85); ctx.lineTo(0, -r*1.7); ctx.lineTo(r*0.15, -r*0.85);
+    ctx.closePath(); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(-r*0.15, r*0.8); ctx.lineTo(0, r*1.5); ctx.lineTo(r*0.15, r*0.8);
+    ctx.closePath(); ctx.fill();
+  } else if (type.key === 'octopus') {
+    ctx.beginPath();
+    ctx.arc(0, -r*0.25, r*0.75, Math.PI, 0);
+    ctx.closePath(); ctx.fill();
+    ctx.lineWidth = r*0.22; ctx.lineCap = 'round'; ctx.strokeStyle = ctx.fillStyle;
+    for (let i = -3; i <= 3; i++) {
+      const tx = i * r * 0.24;
+      ctx.beginPath();
+      ctx.moveTo(tx, r*0.15);
+      ctx.quadraticCurveTo(tx*1.4 + Math.sin(b.t*0.05+i)*6, r*0.9, tx*1.1, r*1.5 + Math.sin(b.t*0.05+i)*8);
+      ctx.stroke();
+    }
+  } else if (type.key === 'squid') {
+    ctx.beginPath();
+    ctx.ellipse(0, -r*0.15, r*0.5, r*1.0, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(-r*0.5, -r*0.5); ctx.lineTo(-r*0.95, -r*1.1); ctx.lineTo(-r*0.3, -r*0.85);
+    ctx.closePath(); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(r*0.5, -r*0.5); ctx.lineTo(r*0.95, -r*1.1); ctx.lineTo(r*0.3, -r*0.85);
+    ctx.closePath(); ctx.fill();
+    ctx.lineWidth = r*0.16; ctx.lineCap = 'round'; ctx.strokeStyle = ctx.fillStyle;
+    for (let i = -2; i <= 2; i++) {
+      const tx = i * r * 0.2;
+      ctx.beginPath();
+      ctx.moveTo(tx, r*0.75);
+      ctx.quadraticCurveTo(tx*1.5 + Math.sin(b.t*0.07+i)*5, r*1.3, tx*1.1, r*1.8 + Math.sin(b.t*0.07+i)*7);
+      ctx.stroke();
+    }
+  } else if (type.key === 'seahorse') {
+    ctx.strokeStyle = ctx.fillStyle;
+    ctx.lineWidth = r*0.42; ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(r*0.15, -r*1.2);
+    ctx.quadraticCurveTo(r*0.65, -r*0.5, r*0.05, r*0.05);
+    ctx.quadraticCurveTo(-r*0.5, r*0.5, -r*0.1, r*1.2);
+    ctx.stroke();
+    ctx.lineWidth = r*0.2;
+    ctx.beginPath();
+    ctx.moveTo(r*0.35, -r*1.15); ctx.lineTo(r*0.85, -r*1.0);
+    ctx.stroke();
+  } else if (type.key === 'orca') {
+    ctx.beginPath();
+    ctx.ellipse(0, 0, r*1.2, r*0.65, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(-r*0.1, -r*0.55); ctx.lineTo(r*0.05, -r*1.35); ctx.lineTo(r*0.25, -r*0.5);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = b.hitFlash > 0 ? '#c9cfd6' : '#0d0d13';
+    ctx.beginPath();
+    ctx.ellipse(-r*0.35, r*0.05, r*0.32, r*0.18, -0.3, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.shadowBlur = 0;
+  ctx.restore();
+}
+
+function drawBossArtifact(b) {
+  const type = b.type;
+  const pulse = 1 + Math.sin(b.t * 0.08) * 0.08;
+  const ar = b.artifactR * pulse;
+  ctx.save();
+  ctx.translate(b.x, b.y);
+  ctx.fillStyle = type.artifactColor;
+  ctx.strokeStyle = 'rgba(255,255,255,0.65)';
+  ctx.lineWidth = 2;
+  ctx.shadowColor = type.artifactColor;
+  ctx.shadowBlur = 16;
+
+  if (type.artifact === 'casco') {
+    ctx.beginPath();
+    ctx.arc(0, 0, ar, Math.PI, 0);
+    ctx.lineTo(ar, ar*0.3); ctx.lineTo(-ar, ar*0.3);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-ar*0.75, -ar*0.1); ctx.lineTo(ar*0.75, -ar*0.1);
+    ctx.strokeStyle = '#1c2a33'; ctx.lineWidth = 3; ctx.stroke();
+  } else if (type.artifact === 'cápsula') {
+    ctx.beginPath();
+    ctx.moveTo(0, -ar);
+    ctx.quadraticCurveTo(ar, -ar, ar, 0);
+    ctx.quadraticCurveTo(ar, ar, 0, ar);
+    ctx.quadraticCurveTo(-ar, ar, -ar, 0);
+    ctx.quadraticCurveTo(-ar, -ar, 0, -ar);
+    ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-ar*0.7, 0); ctx.lineTo(ar*0.7, 0);
+    ctx.strokeStyle = '#1c2a33'; ctx.lineWidth = 2; ctx.stroke();
+  } else if (type.artifact === 'tanque') {
+    ctx.beginPath();
+    ctx.rect(-ar*0.55, -ar, ar*1.1, ar*2);
+    ctx.fill(); ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(0, -ar, ar*0.55, ar*0.22, 0, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.fill();
+  } else if (type.artifact === 'burbuja') {
+    ctx.beginPath();
+    ctx.arc(0, 0, ar, 0, Math.PI*2);
+    ctx.globalAlpha = 0.55; ctx.fill();
+    ctx.globalAlpha = 1; ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(-ar*0.3, -ar*0.3, ar*0.25, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.fill();
+  } else if (type.artifact === 'máscara') {
+    ctx.beginPath();
+    ctx.ellipse(0, 0, ar, ar*0.8, 0, 0, Math.PI*2);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#1c2a33';
+    ctx.beginPath(); ctx.ellipse(-ar*0.35, -ar*0.05, ar*0.18, ar*0.12, 0, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(ar*0.35, -ar*0.05, ar*0.18, ar*0.12, 0, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.shadowBlur = 0;
+  ctx.restore();
 }
 
 function startGame() {
