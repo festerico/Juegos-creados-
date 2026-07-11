@@ -142,6 +142,32 @@
     font-size:12px;color:var(--text-dim);text-align:right;min-height:16px;
   }
 
+  .risk-offer{
+    display:none;align-items:center;gap:10px;
+    margin-top:10px;padding-top:10px;
+    border-top:1px dashed var(--cell-border);
+    animation:riskFadeIn .25s ease;
+  }
+  .risk-offer.show{display:flex;}
+  .risk-btn{
+    flex-shrink:0;
+    background:linear-gradient(90deg,var(--amber),var(--danger));
+    border:none;border-radius:10px;
+    color:#1a1206;font-weight:800;font-size:13px;
+    padding:11px 16px;cursor:pointer;touch-action:manipulation;min-height:40px;
+    animation:riskPulse 1.1s ease-in-out infinite;
+  }
+  .risk-btn:hover{filter:brightness(1.1);}
+  .risk-caption{font-size:10px;color:var(--text-dim);line-height:1.35;}
+  @keyframes riskPulse{
+    0%,100%{transform:scale(1);box-shadow:0 0 6px 0 rgba(224,164,88,.55);}
+    50%{transform:scale(1.05);box-shadow:0 0 18px 5px rgba(224,164,88,.85);}
+  }
+  @keyframes riskFadeIn{
+    from{opacity:0;transform:translateY(4px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+
   .overlay{
     position:fixed;inset:0;
     background:rgba(10,13,17,.82);
@@ -392,7 +418,10 @@
 
   <div class="whoami" id="whoami" style="display:none;">
     <span>Jugando como <b id="whoamiName"></b></span>
-    <button id="switchUserBtn">cambiar jugador</button>
+    <span style="display:flex;gap:12px;">
+      <button id="switchUserBtn">cambiar jugador</button>
+      <button id="homeBtn">menú principal</button>
+    </span>
   </div>
 
   <div class="hud">
@@ -414,6 +443,10 @@
     <div class="next-wrap">
       <div class="next-label">Siguiente</div>
       <div class="next-tile" id="nextTile">1</div>
+    </div>
+    <div class="risk-offer" id="riskOffer">
+      <button class="risk-btn" id="riskBtn">⚡ Arriesgar</button>
+      <div class="risk-caption">+2 tiers a la próxima ficha,<br>pero la oleada sube 40% de umbral</div>
     </div>
   </div>
 </div>
@@ -470,6 +503,9 @@ const powerEl = document.getElementById('power');
 const thresholdEl = document.getElementById('threshold');
 const waveTimerEl = document.getElementById('waveTimer');
 const nextTileEl = document.getElementById('nextTile');
+const riskOfferEl = document.getElementById('riskOffer');
+const riskBtnEl = document.getElementById('riskBtn');
+const homeBtn = document.getElementById('homeBtn');
 const msgEl = document.getElementById('msg');
 const whoamiEl = document.getElementById('whoami');
 const whoamiNameEl = document.getElementById('whoamiName');
@@ -656,6 +692,7 @@ function hasEmpty(){
 function onCellClick(i){
   if(gameOver || paused) return;
   if(board[i] !== 0) return;
+  withdrawRiskOffer(); // si estaba ofrecida y no la usó, la oportunidad se pierde con esta jugada
   board[i] = nextTier;
   sfxPlace();
   vibrate(6);
@@ -674,43 +711,39 @@ function onCellClick(i){
     return;
   }
 
+  nextTier = rollTier();
+  render();
   if(placedCount % 6 === 0){
-    showChoice();
-  } else {
-    nextTier = rollTier();
-    render();
+    offerRisk();
   }
 }
 
-function showChoice(){
-  paused = true;
-  const overlay = document.createElement('div');
-  overlay.className = 'overlay';
-  overlay.innerHTML = `
-    <div class="overlay-card">
-      <h2>Decisión</h2>
-      <p>Podés arriesgar por más potencia o jugar seguro.</p>
-      <div class="choice-row">
-        <button class="choice-btn" id="riskBtn"><b>Arriesgar</b>Próxima pieza +2 tiers, pero la oleada actual sube 40% de umbral</button>
-        <button class="choice-btn" id="safeBtn"><b>Jugar seguro</b>Próxima pieza garantizada tier 2 o 3, sin subir el umbral</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-  document.getElementById('riskBtn').onclick = ()=>{
-    nextTier = Math.min(rollTier()+2, 7);
-    threshold = Math.round(threshold*1.4);
-    overlay.remove();
-    paused = false;
-    render();
-  };
-  document.getElementById('safeBtn').onclick = ()=>{
-    nextTier = Math.random() < 0.6 ? 2 : 3;
-    overlay.remove();
-    paused = false;
-    render();
-  };
+// Oferta de riesgo: NO pausa el juego. Aparece un botón titilante junto a
+// "Siguiente" cada 6 fichas colocadas; si lo tocás antes de colocar la
+// próxima, mejora esa ficha a cambio de subir el umbral de la oleada. Si
+// seguís jugando sin tocarlo, la oferta se pierde sin penalidad.
+let riskAvailable = false;
+
+function offerRisk(){
+  riskAvailable = true;
+  riskOfferEl.classList.add('show');
 }
+
+function withdrawRiskOffer(){
+  if(!riskAvailable) return;
+  riskAvailable = false;
+  riskOfferEl.classList.remove('show');
+}
+
+riskBtnEl.addEventListener('click', ()=>{
+  if(!riskAvailable) return;
+  nextTier = Math.min(nextTier + 2, 7);
+  threshold = Math.round(threshold * 1.4);
+  withdrawRiskOffer();
+  render();
+  vibrate(10);
+  sfxPlace();
+});
 
 let pauseStart = 0;
 let pausedAccum = 0;
@@ -1015,6 +1048,9 @@ switchUserBtn.addEventListener('click', ()=>{
   try{ localStorage.removeItem(ME_KEY); }catch(e){}
   location.href = '/';
 });
+homeBtn.addEventListener('click', ()=>{
+  location.href = '/';
+});
 
 // ---------- Instructivo ----------
 
@@ -1026,7 +1062,7 @@ const HOWTO_HTML = `
     <div class="item"><span class="icon">✨</span><span><b>Fusioná:</b> si queda pegada a otra del mismo número, se combinan solas en una más fuerte.</span></div>
     <div class="item"><span class="icon">⏱️</span><span><b>Oleada:</b> cuando la barra se llena, se compara tu potencia total (suma de fichas) contra un umbral. Si llegás, la repelés y sumás puntos.</span></div>
     <div class="item"><span class="icon">💔</span><span><b>Si no llegás:</b> perdés una vida y el juego te saca tu ficha más fuerte.</span></div>
-    <div class="item"><span class="icon">🎲</span><span><b>Decisión:</b> cada 6 fichas, elegís entre una pieza más fuerte (sube el umbral) o una segura garantizada.</span></div>
+    <div class="item"><span class="icon">⚡</span><span><b>Riesgo opcional:</b> cada 6 fichas aparece un botón titilante. Si lo tocás antes de colocar la siguiente, la mejorás +2 tiers a cambio de subir el umbral de la oleada un 40%. El juego nunca se detiene: si no lo tocás a tiempo, seguís jugando normal, sin penalidad.</span></div>
     <div class="item"><span class="icon">🏆</span><span><b>Ranking:</b> tu rating pondera puntaje ajustado por intentos — no gana solo quien más juega, gana quien es más eficiente.</span></div>
   </div>
 `;

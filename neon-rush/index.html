@@ -160,7 +160,7 @@
   <button id="pauseBtn" class="hidden">❚❚</button>
   <button id="shootBtn" class="hidden">DISPARAR</button>
   <div id="overdriveBanner" class="hidden">¡A TODA VELOCIDAD! x2</div>
-  <div id="whoami"><span>jugando como <b id="whoamiName"></b></span> · <a id="switchUserLink">cambiar</a></div>
+  <div id="whoami"><span>jugando como <b id="whoamiName"></b></span> · <a id="switchUserLink">cambiar</a> · <a id="homeLink">menú</a></div>
 
   <div id="startScreen" class="overlay">
     <div class="title">NEON RUSH</div>
@@ -326,6 +326,9 @@ async function initUser(){
 
 switchUserLink.addEventListener('click', ()=>{
   try{ localStorage.removeItem(ME_KEY); }catch(e){}
+  location.href = '/';
+});
+document.getElementById('homeLink').addEventListener('click', ()=>{
   location.href = '/';
 });
 
