@@ -380,6 +380,19 @@
     50%{transform:scale(1.15);}
   }
 
+  .wavebar-wrap.lastchance .wavebar{
+    background:linear-gradient(90deg,#fff,var(--danger));
+    animation:lastChanceGlow .3s ease-in-out infinite;
+  }
+  @keyframes lastChanceGlow{
+    0%,100%{filter:brightness(1);}
+    50%{filter:brightness(1.9);}
+  }
+  .powerline.lastchance #power{
+    color:#fff;
+    animation:dangerText .3s ease-in-out infinite;
+  }
+
   .streak-badge{
     font-size:11px;color:var(--amber);font-weight:700;
     opacity:0;transition:opacity .25s ease;
@@ -815,6 +828,9 @@ pauseBtn.addEventListener('click', togglePause);
 
 let pauseStart = 0;
 let pausedAccum = 0;
+let inGraceWindow = false;
+let graceStart = 0;
+const GRACE_MS = 1500; // último respiro: un merge más puede salvar la oleada
 
 function tickWave(now){
   if(gameOver) return;
@@ -831,6 +847,25 @@ function tickWave(now){
   waveTimerEl.style.transform = 'scaleX(' + pct + ')';
 
   const power = board.reduce((a,b)=>a+b,0);
+
+  if(inGraceWindow){
+    if(power >= threshold){
+      inGraceWindow = false;
+      wavebarWrapEl.classList.remove('lastchance');
+      powerlineEl.classList.remove('lastchance');
+      resolveWave();
+      return;
+    }
+    if(now - graceStart >= GRACE_MS){
+      inGraceWindow = false;
+      wavebarWrapEl.classList.remove('lastchance');
+      powerlineEl.classList.remove('lastchance');
+      resolveWave();
+      return;
+    }
+    return; // sigue en la ventana de gracia, no evaluar danger normal
+  }
+
   const shouldPanic = pct >= 0.72 && power < threshold;
   if(shouldPanic !== dangerActive){
     dangerActive = shouldPanic;
@@ -847,7 +882,23 @@ function tickWave(now){
   }
 
   if(pct >= 1){
-    resolveWave();
+    if(power >= threshold){
+      resolveWave();
+    } else {
+      // último respiro: no se pierde la oleada al toque, hay una
+      // ventana corta donde un merge más todavía puede salvarla
+      inGraceWindow = true;
+      graceStart = now;
+      dangerActive = false;
+      wavebarWrapEl.classList.remove('danger');
+      powerlineEl.classList.remove('danger');
+      wavebarWrapEl.classList.add('lastchance');
+      powerlineEl.classList.add('lastchance');
+      msgEl.textContent = '¡ÚLTIMA CHANCE! Un merge más';
+      msgEl.style.color = '#fff';
+      sfxDangerTick();
+      vibrate([20,20,20]);
+    }
   }
 }
 
@@ -876,12 +927,12 @@ function resolveWave(){
     lives--;
     winStreak = 0;
     streakBadgeEl.classList.remove('show');
-    msgEl.textContent = 'Oleada te superó — perdiste una unidad clave';
+    msgEl.textContent = 'Oleada te superó — perdiste una unidad';
     msgEl.style.color = 'var(--danger)';
     sfxWaveLose();
     vibrate([40,30,40]);
     shake(true);
-    removeStrongestTile();
+    removeWeakestTile();
     if(lives <= 0){
       sfxGameOver();
       endGame('Tres oleadas te superaron. La grilla cayó.');
@@ -896,13 +947,18 @@ function resolveWave(){
   setTimeout(()=>{ if(!gameOver) msgEl.textContent=''; }, 1800);
 }
 
-function removeStrongestTile(){
-  let best = -1, bestVal = -1;
-  board.forEach((t,i)=>{ if(t>bestVal){ bestVal=t; best=i; } });
-  if(best>=0){
-    const cellEl = gridEl.children[best];
+function removeWeakestTile(){
+  // Antes se sacaba la ficha más fuerte del tablero: borraba lo mejor que
+  // habías construido. Ahora se saca la más débil — pega, pero no te
+  // deshace el progreso real.
+  let worst = -1, worstVal = Infinity;
+  board.forEach((t,i)=>{
+    if(t>0 && t<worstVal){ worstVal=t; worst=i; }
+  });
+  if(worst>=0){
+    const cellEl = gridEl.children[worst];
     if(cellEl) cellEl.classList.add('flash-out');
-    board[best] = 0;
+    board[worst] = 0;
   }
 }
 
@@ -1132,7 +1188,8 @@ const HOWTO_HTML = `
     <div class="item"><span class="icon">👆</span><span><b>Colocá:</b> hacé clic en una celda vacía para poner la ficha que ves en "Siguiente".</span></div>
     <div class="item"><span class="icon">✨</span><span><b>Fusioná:</b> si queda pegada a otra del mismo número, se combinan solas en una más fuerte.</span></div>
     <div class="item"><span class="icon">⏱️</span><span><b>Oleada:</b> cuando la barra se llena, se compara tu potencia total (suma de fichas) contra un umbral. Si llegás, la repelés y sumás puntos.</span></div>
-    <div class="item"><span class="icon">💔</span><span><b>Si no llegás:</b> perdés una vida y el juego te saca tu ficha más fuerte.</span></div>
+    <div class="item"><span class="icon">🔥</span><span><b>Último respiro:</b> si el tiempo se acaba sin llegar al umbral, tenés 1.5 segundos más — un merge a tiempo todavía puede salvar la oleada.</span></div>
+    <div class="item"><span class="icon">💔</span><span><b>Si no llegás:</b> perdés una vida y el juego te saca tu ficha más débil (la más fuerte, la que más te costó construir, queda a salvo).</span></div>
     <div class="item"><span class="icon">⚡</span><span><b>Riesgo opcional:</b> cada 6 fichas aparece un botón titilante. Si lo tocás antes de colocar la siguiente, la mejorás +2 tiers a cambio de subir el umbral de la oleada un 40%. El juego nunca se detiene: si no lo tocás a tiempo, seguís jugando normal, sin penalidad.</span></div>
     <div class="item"><span class="icon">🏆</span><span><b>Ranking:</b> tu rating pondera puntaje ajustado por intentos — no gana solo quien más juega, gana quien es más eficiente.</span></div>
   </div>
