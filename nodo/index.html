@@ -288,13 +288,22 @@
 
   .whoami{
     display:flex;justify-content:space-between;align-items:center;
-    font-size:11px;color:var(--text-dim);margin-bottom:10px;
+    flex-wrap:wrap;gap:8px;
+    font-size:11px;color:var(--text-dim);margin-bottom:14px;
   }
   .whoami b{color:var(--teal);}
+  .whoami-actions{display:flex;gap:8px;}
   .whoami button{
-    background:none;border:none;color:var(--text-dim);
-    text-decoration:underline;cursor:pointer;font-size:10px;font-family:inherit;
+    display:flex;align-items:center;gap:5px;
+    background:var(--cell);border:1px solid var(--cell-border);
+    color:var(--text-dim);border-radius:20px;
+    padding:6px 12px;font-weight:600;
+    cursor:pointer;font-size:11px;font-family:inherit;
+    touch-action:manipulation;
+    transition:border-color .15s ease, color .15s ease;
   }
+  .whoami button:hover{border-color:var(--teal);color:var(--teal);}
+  #homeBtn:hover{border-color:var(--amber);color:var(--amber);}
 
   .name-input{
     width:100%;background:var(--cell);border:1px solid var(--cell-border);
@@ -448,9 +457,9 @@
 
   <div class="whoami" id="whoami" style="display:none;">
     <span>Jugando como <b id="whoamiName"></b></span>
-    <span style="display:flex;gap:12px;">
-      <button id="switchUserBtn">cambiar jugador</button>
-      <button id="homeBtn">menú principal</button>
+    <span class="whoami-actions">
+      <button id="switchUserBtn">🔄 cambiar jugador</button>
+      <button id="homeBtn">🏠 menú</button>
     </span>
   </div>
 

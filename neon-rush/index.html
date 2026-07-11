@@ -115,14 +115,24 @@
   .hint { font-size: 12px; color: #6c7a89; margin-top: -6px; }
 
   #whoami{
-    position: absolute; bottom: 12px; left: 12px;
+    position: absolute; bottom: 14px; left: 14px;
     font-size: 11px; color: #6c7a89; letter-spacing: .04em;
-    display: flex; gap: 6px; align-items: center; pointer-events: none;
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
     z-index: 5;
   }
-  #whoami b{ color: #9fb0c0; font-weight: 600; }
-  #whoami a{ color: #ff3d9a; text-decoration: none; pointer-events: auto; cursor: pointer; }
-  #whoami a:hover{ text-decoration: underline; }
+  #whoami .whoami-label{ pointer-events: none; }
+  #whoami b{ color: #eafcff; font-weight: 700; }
+  #whoami a{
+    display: flex; align-items: center; gap: 5px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.16);
+    color: #cfd8e3; border-radius: 20px;
+    padding: 6px 12px; font-weight: 600;
+    text-decoration: none; pointer-events: auto; cursor: pointer;
+    transition: border-color .15s ease, color .15s ease, background .15s ease;
+  }
+  #whoami a:hover{ border-color: #00fff0; color: #00fff0; background: rgba(0,255,240,0.1); }
+  #homeLink:hover{ border-color: #ff3d9a; color: #ff3d9a; background: rgba(255,61,154,0.1); }
 
   .lb-wrap{
     width: 100%; max-width: 340px; max-height: 34vh; overflow-y: auto;
@@ -160,7 +170,7 @@
   <button id="pauseBtn" class="hidden">❚❚</button>
   <button id="shootBtn" class="hidden">DISPARAR</button>
   <div id="overdriveBanner" class="hidden">¡A TODA VELOCIDAD! x2</div>
-  <div id="whoami"><span>jugando como <b id="whoamiName"></b></span> · <a id="switchUserLink">cambiar</a> · <a id="homeLink">menú</a></div>
+  <div id="whoami"><span class="whoami-label">jugando como <b id="whoamiName"></b></span><a id="switchUserLink">🔄 cambiar</a><a id="homeLink">🏠 menú</a></div>
 
   <div id="startScreen" class="overlay">
     <div class="title">NEON RUSH</div>
