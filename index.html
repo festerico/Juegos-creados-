@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Juegos</title>
+<link rel="icon" type="image/png" href="./favicon-192.png">
+<link rel="shortcut icon" href="./favicon.ico">
+<style>
+  :root{
+    --bg:#060608;
+    --bg-elev:#0d0d13;
+    --line:rgba(255,255,255,0.08);
+    --ink:#eef2f5;
+    --ink-dim:#8b95a1;
+    --radius:18px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{
+    width:100%;min-height:100%;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  body{
+    display:flex;flex-direction:column;align-items:center;
+    padding:64px 20px 80px;
+  }
+  .wrap{width:100%;max-width:920px;}
+
+  /* header */
+  header{display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:56px;}
+  .logo{
+    width:56px;height:56px;object-fit:contain;
+    filter:drop-shadow(0 0 18px rgba(120,140,255,0.35));
+    margin-bottom:22px;
+    opacity:0;transform:translateY(6px);
+    animation:rise .6s ease forwards;
+  }
+  .eyebrow{
+    font-family:ui-monospace,"SF Mono","Cascadia Code",monospace;
+    font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--ink-dim);margin-bottom:14px;
+    opacity:0;transform:translateY(6px);
+    animation:rise .6s ease .08s forwards;
+  }
+  h1{
+    font-size:clamp(30px,6vw,46px);font-weight:800;letter-spacing:-0.02em;
+    line-height:1.1;margin-bottom:14px;
+    opacity:0;transform:translateY(6px);
+    animation:rise .6s ease .14s forwards;
+  }
+  .sub{
+    font-size:15px;color:var(--ink-dim);max-width:440px;line-height:1.55;
+    opacity:0;transform:translateY(6px);
+    animation:rise .6s ease .2s forwards;
+  }
+  @keyframes rise{to{opacity:1;transform:translateY(0);}}
+
+  /* grid */
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+    gap:18px;
+  }
+  .card{
+    position:relative;
+    display:flex;flex-direction:column;
+    background:var(--bg-elev);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+    text-decoration:none;color:inherit;
+    transition:border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+    opacity:0;transform:translateY(10px);
+    animation:rise .6s ease forwards;
+  }
+  .card:hover{transform:translateY(-3px);}
+  .card:hover, .card:focus-visible{
+    border-color:var(--accent);
+    box-shadow:0 0 0 1px var(--accent) inset, 0 12px 32px -12px var(--accent-glow);
+  }
+  .card:focus-visible{outline:2px solid var(--accent);outline-offset:3px;}
+
+  .preview{
+    display:block;width:100%;height:150px;
+    background:
+      radial-gradient(circle at 30% 20%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 60%),
+      #08080c;
+  }
+
+  .body{padding:20px 22px 22px;display:flex;flex-direction:column;gap:10px;}
+  .title{
+    font-size:19px;font-weight:800;letter-spacing:.01em;
+  }
+  .tagline{font-size:13.5px;color:var(--ink-dim);line-height:1.5;}
+  .meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:2px;}
+  .chip{
+    font-family:ui-monospace,"SF Mono","Cascadia Code",monospace;
+    font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--accent);
+    background:color-mix(in srgb, var(--accent) 14%, transparent);
+    border:1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    padding:4px 9px;border-radius:20px;
+  }
+  .play{
+    margin-top:8px;
+    font-family:ui-monospace,"SF Mono","Cascadia Code",monospace;
+    font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--accent);display:flex;align-items:center;gap:6px;
+  }
+  .play svg{width:12px;height:12px;transition:transform .2s ease;}
+  .card:hover .play svg{transform:translateX(3px);}
+
+  @media (prefers-reduced-motion: reduce){
+    .logo,.eyebrow,h1,.sub,.card{animation:none;opacity:1;transform:none;}
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <img class="logo" src="./favicon-192.png" alt="">
+      <div class="eyebrow">colección</div>
+      <h1>Elegí un juego</h1>
+      <p class="sub">Prototipos jugables, uno a la vez. Se van sumando acá.</p>
+    </header>
+
+    <div class="grid" id="grid"></div>
+  </div>
+
+<script>
+/* ============================================================
+   Para sumar un juego nuevo: agregar un objeto a este array.
+   No hace falta tocar nada más del archivo.
+
+   id       -> identificador interno (string simple, sin espacios)
+   title    -> nombre visible
+   tagline  -> una línea, qué se hace en el juego
+   meta     -> 1-3 tags cortos (chips)
+   url      -> ruta al archivo del juego
+   accent   -> color principal (hex), define el glow/borde/chips
+   preview  -> 'grid' | 'particles' | 'none'
+               (agregar una función nueva en PREVIEWS para otros estilos)
+   ============================================================ */
+const GAMES = [
+  {
+    id: 'nodo',
+    title: 'NODO',
+    tagline: 'Fusioná fichas en la grilla antes de que la presión te gane.',
+    meta: ['grid 5×5', 'supervivencia'],
+    url: './nodo/',
+    accent: '#4fd1c5',
+    preview: 'grid',
+    // paleta real de tiers 1-7 de NODO, usada por el preview en vez del accent solo
+    palette: ['#9fb4d0', '#7fd1c1', '#4fd1c5', '#e0d158', '#e0a458', '#d9634f', '#f06fb0']
+  },
+  {
+    id: 'neon-rush',
+    title: 'NEON RUSH',
+    tagline: 'Esquivá los picos, cazá los orbes, no perdás el ritmo.',
+    meta: ['reflejos', 'arcade'],
+    url: './neon-rush/',
+    accent: '#00fff0',
+    preview: 'particles'
+  }
+];
+
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function hexToRgb(hex){
+  const n = parseInt(hex.replace('#',''),16);
+  return [(n>>16)&255,(n>>8)&255,n&255];
+}
+
+/* --- mini previews: cada una dibuja UN frame o loopea con rAF --- */
+const PREVIEWS = {
+  grid(ctx, w, h, accent, palette){
+    const cols = 4, rows = 3;
+    const pad = 14;
+    const cw = (w - pad*2) / cols, ch = (h - pad*2) / rows;
+    let t = 0;
+    // celda que "pulsa" (simula fusión) en loop; si hay paleta de tiers, cada
+    // celda toma un color de tier real en vez del accent plano
+    const cells = [];
+    for(let y=0;y<rows;y++) for(let x=0;x<cols;x++){
+      const [r,g,b] = hexToRgb(palette ? palette[Math.floor(Math.random()*palette.length)] : accent);
+      cells.push({x, y, phase: Math.random()*Math.PI*2, r, g, b});
+    }
+
+    function frame(){
+      ctx.clearRect(0,0,w,h);
+      cells.forEach(c=>{
+        const pulse = reduceMotion ? 0.5 : (Math.sin(t*0.03 + c.phase)+1)/2;
+        const alpha = 0.12 + pulse*0.4;
+        const scale = 0.72 + pulse*0.22;
+        const cx = pad + c.x*cw + cw/2;
+        const cy = pad + c.y*ch + ch/2;
+        const size = Math.min(cw,ch)*0.6*scale;
+        ctx.fillStyle = `rgba(${c.r},${c.g},${c.b},${alpha})`;
+        roundRect(ctx, cx-size/2, cy-size/2, size, size, 6);
+        ctx.fill();
+      });
+      t++;
+      if(!reduceMotion) requestAnimationFrame(frame);
+    }
+    frame();
+  },
+
+  particles(ctx, w, h, accent){
+    const [r,g,b] = hexToRgb(accent);
+    const N = 10;
+    const parts = Array.from({length:N}, () => ({
+      x: Math.random()*w,
+      y: Math.random()*h,
+      r: 2 + Math.random()*3,
+      s: 0.4 + Math.random()*0.9,
+      hue: Math.random() > 0.5
+    }));
+    function frame(){
+      ctx.clearRect(0,0,w,h);
+      parts.forEach(p=>{
+        if(!reduceMotion){
+          p.y += p.s;
+          if(p.y > h + 10){ p.y = -10; p.x = Math.random()*w; }
+        }
+        const col = p.hue ? `rgba(${r},${g},${b},0.9)` : `rgba(255,61,154,0.85)`;
+        ctx.beginPath();
+        ctx.fillStyle = col;
+        ctx.shadowColor = col;
+        ctx.shadowBlur = 8;
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+        ctx.fill();
+      });
+      ctx.shadowBlur = 0;
+      if(!reduceMotion) requestAnimationFrame(frame);
+    }
+    frame();
+  },
+
+  none(){}
+};
+
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+
+/* --- render de las cards --- */
+const grid = document.getElementById('grid');
+
+GAMES.forEach((game, i) => {
+  const [r,g,b] = hexToRgb(game.accent);
+
+  const card = document.createElement('a');
+  card.href = game.url;
+  card.className = 'card';
+  card.style.setProperty('--accent', game.accent);
+  card.style.setProperty('--accent-glow', `rgba(${r},${g},${b},0.28)`);
+  card.style.animationDelay = `${0.26 + i*0.06}s`;
+
+  const canvas = document.createElement('canvas');
+  canvas.className = 'preview';
+  card.appendChild(canvas);
+
+  const body = document.createElement('div');
+  body.className = 'body';
+  body.innerHTML = `
+    <div class="title">${game.title}</div>
+    <div class="tagline">${game.tagline}</div>
+    <div class="meta">${game.meta.map(m => `<span class="chip">${m}</span>`).join('')}</div>
+    <div class="play">jugar
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 12h14M13 5l7 7-7 7"/>
+      </svg>
+    </div>
+  `;
+  card.appendChild(body);
+  grid.appendChild(card);
+
+  // setup canvas a resolución real + arrancar preview
+  const setup = () => {
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    (PREVIEWS[game.preview] || PREVIEWS.none)(ctx, rect.width, rect.height, game.accent, game.palette);
+  };
+  requestAnimationFrame(setup);
+});
+</script>
+</body>
+</html>
