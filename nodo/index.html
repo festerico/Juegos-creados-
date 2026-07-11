@@ -143,13 +143,14 @@
   }
 
   .risk-offer{
-    display:none;align-items:center;gap:10px;
+    display:flex;align-items:center;gap:10px;
     width:100%;box-sizing:border-box;
     margin-top:10px;padding-top:10px;
     border-top:1px dashed var(--cell-border);
-    animation:riskFadeIn .25s ease;
+    opacity:0;pointer-events:none;
+    transition:opacity .3s ease;
   }
-  .risk-offer.show{display:flex;}
+  .risk-offer.show{opacity:1;pointer-events:auto;}
   @media (max-width:380px){
     .risk-offer{flex-direction:column;align-items:flex-start;gap:8px;}
   }
