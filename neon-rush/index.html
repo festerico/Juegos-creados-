@@ -406,11 +406,11 @@ function scoreMul() { return overdrive > 0 ? 2 : 1; }
 // destruirle el artefacto que lo mantiene en el espacio.
 // ============================================================
 const BOSS_TYPES = [
-  { key:'shark',    name:'Tiburón espacial',   color:'#8fd6ff', artifact:'casco',   artifactColor:'#ffd166', hp:6 },
-  { key:'octopus',  name:'Pulpo espacial',     color:'#c77dff', artifact:'cápsula', artifactColor:'#ffd166', hp:7 },
-  { key:'squid',    name:'Calamar espacial',   color:'#ff6fb0', artifact:'tanque',  artifactColor:'#ffd166', hp:6 },
-  { key:'seahorse', name:'Caballito espacial', color:'#7fffb0', artifact:'burbuja', artifactColor:'#ffd166', hp:5 },
-  { key:'orca',     name:'Orca espacial',      color:'#eafcff', artifact:'máscara', artifactColor:'#ffd166', hp:8 }
+  { key:'shark',    name:'Tiburón espacial',   color:'#8fd6ff', artifact:'casco',   artifactColor:'#ffd166', hp:10 },
+  { key:'octopus',  name:'Pulpo espacial',     color:'#c77dff', artifact:'cápsula', artifactColor:'#ffd166', hp:12 },
+  { key:'squid',    name:'Calamar espacial',   color:'#ff6fb0', artifact:'tanque',  artifactColor:'#ffd166', hp:14 },
+  { key:'seahorse', name:'Caballito espacial', color:'#7fffb0', artifact:'burbuja', artifactColor:'#ffd166', hp:16 },
+  { key:'orca',     name:'Orca espacial',      color:'#eafcff', artifact:'máscara', artifactColor:'#ffd166', hp:18 }
 ];
 
 const bossBanner = document.getElementById('bossBanner');
@@ -444,7 +444,7 @@ function spawnBoss() {
     x: W/2, y: -100,
     homeY: H * 0.26,
     r: 46,
-    artifactR: 20,
+    artifactR: 24,
     hp: type.hp, maxHp: type.hp,
     phase: 'entering',
     t: 0,
@@ -800,7 +800,7 @@ function update(dt) {
       boss.y += 2.4 * dt;
       if (boss.y >= boss.homeY) { boss.y = boss.homeY; boss.phase = 'fighting'; }
     } else {
-      boss.x = W/2 + Math.sin(boss.t * 0.018) * (W * 0.28);
+      boss.x = W/2 + Math.sin(boss.t * 0.011) * (W * 0.16);
       boss.y = boss.homeY + Math.sin(boss.t * 0.03) * 14;
 
       boss.attackTimer -= dt;
@@ -913,7 +913,7 @@ function update(dt) {
     }
     if (!hit && boss && boss.phase === 'fighting') {
       const dArt = Math.hypot(boss.x - b.x, boss.y - b.y);
-      if (dArt < boss.artifactR + 6) {
+      if (dArt < boss.artifactR + 9) {
         // le pegó al artefacto: ahí sí duele
         boss.hp--;
         boss.hitFlash = 10;
