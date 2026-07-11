@@ -418,6 +418,21 @@
       max-height:none;
     }
   }
+
+  @media (min-width:1000px){
+    #sideInfo{
+      position:fixed;left:28px;top:50%;transform:translateY(-50%);
+      width:200px;
+      background:var(--panel);
+      border-right:2px solid var(--amber);
+      border-radius:10px;
+      padding:16px;
+      box-shadow:0 12px 34px rgba(0,0,0,.45);
+    }
+    #sideInfo .bottom{margin-top:0;}
+    #sideInfo .next-wrap{flex-direction:column;align-items:flex-start;gap:8px;}
+    #sideInfo .risk-offer{flex-direction:column;align-items:flex-start;gap:8px;}
+  }
 </style>
 </head>
 <body>
@@ -454,15 +469,17 @@
 
   <div id="grid"></div>
 
-  <div class="bottom">
-    <div class="next-wrap">
-      <div class="next-label">Siguiente</div>
-      <div class="next-tile" id="nextTile">1</div>
+  <div id="sideInfo">
+    <div class="bottom">
+      <div class="next-wrap">
+        <div class="next-label">Siguiente</div>
+        <div class="next-tile" id="nextTile">1</div>
+      </div>
     </div>
-  </div>
-  <div class="risk-offer" id="riskOffer">
-    <button class="risk-btn" id="riskBtn">⚡ Arriesgar</button>
-    <div class="risk-caption">+2 tiers a la próxima ficha,<br>pero la oleada sube 40% de umbral</div>
+    <div class="risk-offer" id="riskOffer">
+      <button class="risk-btn" id="riskBtn">⚡ Arriesgar</button>
+      <div class="risk-caption">+2 tiers a la próxima ficha,<br>pero la oleada sube 40% de umbral</div>
+    </div>
   </div>
 </div>
 </div>
