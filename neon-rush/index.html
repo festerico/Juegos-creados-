@@ -209,7 +209,7 @@
 
   <div id="startScreen" class="overlay">
     <div class="title">NEON RUSH</div>
-    <div class="subtitle">Esquivá los picos rojos (mirá el aviso ⌄ antes de que aparezcan) y recolectá orbes cian y dorados. Los orbes blancos "chispa" caen rápido y valen el triple: hay que reaccionar ya. De vez en cuando el juego entra en modo overdrive: todo se acelera y los puntos valen el doble. La bolita roja te carga un disparo (botón DISPARAR o espacio). Cada tanto vas a ver un planeta bajando desde arriba: cuando llega a la mitad de la pantalla, aparece un jefe. Su cuerpo te hace daño si lo tocás — dispará a su artefacto (el brillo dorado en el centro) para destruirlo.</div>
+    <div class="subtitle">Esquivá los picos rojos (mirá el aviso ⌄ antes de que aparezcan) y recolectá orbes cian y dorados. Los orbes blancos "chispa" caen rápido y valen el triple: hay que reaccionar ya. De vez en cuando el juego entra en modo overdrive: todo se acelera y los puntos valen el doble. La bolita roja te carga un disparo (botón DISPARAR o espacio). Cada tanto vas a ver un planeta bajando desde arriba: cuando llega a la mitad de la pantalla, aparece un jefe que ataca y hay que esquivar. Su cuerpo te hace daño si lo tocás — dispará a su artefacto (el brillo dorado en el centro) para destruirlo.</div>
     <button id="startBtn" class="action">COMENZAR</button>
     <div class="hint">Mové el mouse o el dedo · flechas / A-D también funcionan · Espacio para disparar</div>
   </div>
@@ -396,6 +396,7 @@ let powerupTimer = 0;
 let reflexTimer = 0;
 let overdrive = 0;         // frames restantes del modo rápido
 let overdriveCooldown = 0; // frames hasta que pueda activarse de nuevo
+let bossProjectiles = [];  // ataques que dispara el jefe activo
 
 function curSpeedMul() { return speedMul * (overdrive > 0 ? 1.5 : 1); }
 function scoreMul() { return overdrive > 0 ? 2 : 1; }
@@ -420,8 +421,8 @@ const bossBarEl = document.getElementById('bossBar');
 let boss = null;           // jefe activo en pantalla, o null
 let bossApproach = null;   // "planeta" acercándose antes de que aparezca el jefe
 let bossIndex = 0;         // qué jefe del ciclo sigue
-let bossGap = 480;         // separación de puntaje entre jefes, crece un poco cada vez
-let nextBossScore = 480;   // puntaje al que se dispara el próximo acercamiento
+let bossGap = 960;         // separación de puntaje entre jefes, crece un poco cada vez
+let nextBossScore = 960;   // puntaje al que se dispara el próximo acercamiento (el doble que antes)
 let bossInvuln = 0;        // frames de gracia tras chocar contra el cuerpo del jefe
 
 function hexToRgb(hex) {
@@ -432,6 +433,7 @@ function hexToRgb(hex) {
 function startBossApproach() {
   bossApproach = { y: -60, speed: 1.1 };
   bossBanner.classList.remove('hidden');
+  powerupTimer = Math.min(powerupTimer, 90); // aseguro que caiga munición antes de que llegue el jefe
 }
 
 function spawnBoss() {
@@ -446,10 +448,13 @@ function spawnBoss() {
     hp: type.hp, maxHp: type.hp,
     phase: 'entering',
     t: 0,
-    hitFlash: 0
+    hitFlash: 0,
+    attackTimer: 130
   };
   bossApproach = null;
   bossInvuln = 0;
+  ammo = Math.min(MAX_AMMO, ammo + 2); // arrancás la pelea con algo con qué disparar, pase lo que pase
+  updateAmmo();
   bossBanner.classList.add('hidden');
   bossHud.classList.remove('hidden');
   bossTitleEl.innerHTML = '<b>' + type.name + '</b> · destruí su <span class="artifact">' + type.artifact + '</span>';
@@ -461,6 +466,32 @@ function updateBossBar() {
   bossBarEl.style.width = pct + '%';
 }
 
+// cada especie ataca distinto: el tiburón muerde con un abanico de dientes,
+// el pulpo tira tinta en arco, el calamar un dardo directo y rápido,
+// el caballito una burbuja lenta que serpentea, la orca un pulso a los costados
+function bossAttack(b) {
+  const type = b.type;
+  if (type.key === 'shark') {
+    const baseAngle = Math.atan2(player.y - b.y, player.x - b.x);
+    for (let i = -1; i <= 1; i++) {
+      const a = baseAngle + i * 0.24;
+      bossProjectiles.push({ x: b.x, y: b.y, vx: Math.cos(a)*5.4, vy: Math.sin(a)*5.4, r: 7, kind: 'tooth', color: type.color });
+    }
+  } else if (type.key === 'octopus') {
+    for (let i = 0; i < 2; i++) {
+      const dir = i === 0 ? -1 : 1;
+      bossProjectiles.push({ x: b.x + dir*b.r*0.6, y: b.y + b.r*0.5, vx: dir*1.2, vy: 3.3, r: 9, kind: 'ink', color: type.color });
+    }
+  } else if (type.key === 'squid') {
+    bossProjectiles.push({ x: b.x, y: b.y, vx: (player.x - b.x) * 0.006, vy: 6.8, r: 6, kind: 'dart', color: type.color });
+  } else if (type.key === 'seahorse') {
+    bossProjectiles.push({ x: b.x, y: b.y, vx: 0, vy: 2.5, r: 11, kind: 'bubble', wob: Math.random()*Math.PI*2, color: type.color });
+  } else if (type.key === 'orca') {
+    bossProjectiles.push({ x: b.x - b.r, y: b.y, vx: -1.7, vy: 3.7, r: 10, kind: 'sonar', color: type.color });
+    bossProjectiles.push({ x: b.x + b.r, y: b.y, vx: 1.7, vy: 3.7, r: 10, kind: 'sonar', color: type.color });
+  }
+}
+
 function defeatBoss() {
   burst(boss.x, boss.y, hexToRgb(boss.type.artifactColor), 30);
   burst(boss.x, boss.y, hexToRgb(boss.type.color), 30);
@@ -469,6 +500,7 @@ function defeatBoss() {
   shake = Math.max(shake, 18);
   bossHud.classList.add('hidden');
   boss = null;
+  bossProjectiles = [];
   bossGap = Math.round(bossGap * 1.18);
   nextBossScore = score + bossGap;
   speedMul += 0.12; // cada jefe superado sube un poco el piso de dificultad para lo que sigue
@@ -497,9 +529,10 @@ function initGame() {
   boss = null;
   bossApproach = null;
   bossIndex = 0;
-  bossGap = 480;
+  bossGap = 960;
   nextBossScore = bossGap;
   bossInvuln = 0;
+  bossProjectiles = [];
   updateLives();
   updateAmmo();
   scoreEl.textContent = '0';
@@ -727,8 +760,9 @@ function update(dt) {
     });
   }
 
-  // durante el acercamiento del jefe y la pelea, se corta el spawn normal
-  // para que la pantalla quede despejada y el foco sea el jefe
+  // el spawn normal de picos y orbes de reflejo se corta durante la
+  // secuencia del jefe; la munición NO se corta, porque sin ella no hay
+  // forma de pegarle al artefacto
   if (!boss && !bossApproach) {
     spawnTimer -= dt;
     if (spawnTimer <= 0) {
@@ -736,17 +770,18 @@ function update(dt) {
       spawnTimer = Math.max(46, 66 - speedMul * 6) * (overdrive > 0 ? 0.55 : 1);
     }
 
-    powerupTimer -= dt;
-    if (powerupTimer <= 0) {
-      powerups.push(makePowerup());
-      powerupTimer = 260 + Math.random() * 180; // cada tanto, no muy seguido
-    }
-
     reflexTimer -= dt;
     if (reflexTimer <= 0) {
       orbs.push(makeReflexOrb(40 + Math.random() * (W - 80)));
       reflexTimer = 300 + Math.random() * 260;
     }
+  }
+
+  powerupTimer -= dt;
+  if (powerupTimer <= 0) {
+    powerups.push(makePowerup());
+    // durante el jefe caen bastante más seguido: nunca te tiene que dejar sin poder disparar
+    powerupTimer = (boss || bossApproach) ? 130 + Math.random() * 90 : 260 + Math.random() * 180;
   }
 
   // planeta acercándose: crece y baja hasta la mitad de pantalla, ahí aparece el jefe
@@ -767,11 +802,33 @@ function update(dt) {
     } else {
       boss.x = W/2 + Math.sin(boss.t * 0.018) * (W * 0.28);
       boss.y = boss.homeY + Math.sin(boss.t * 0.03) * 14;
+
+      boss.attackTimer -= dt;
+      if (boss.attackTimer <= 0) {
+        bossAttack(boss);
+        boss.attackTimer = 105 + Math.random() * 65;
+      }
     }
 
     const distPlayer = Math.hypot(boss.x - player.x, boss.y - player.y);
     if (bossInvuln <= 0 && distPlayer < boss.r + player.r - 6) {
       bossInvuln = 90;
+      loseLife();
+    }
+  }
+
+  for (let i = bossProjectiles.length - 1; i >= 0; i--) {
+    const p = bossProjectiles[i];
+    if (p.kind === 'bubble') {
+      p.wob += 0.08 * dt;
+      p.x += Math.sin(p.wob) * 1.3 * dt;
+    }
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    if (p.y > H + 30 || p.x < -40 || p.x > W + 40) { bossProjectiles.splice(i, 1); continue; }
+    const dist = Math.hypot(p.x - player.x, p.y - player.y);
+    if (dist < p.r + player.r - 3) {
+      bossProjectiles.splice(i, 1);
       loseLife();
     }
   }
@@ -1015,6 +1072,17 @@ function draw() {
     ctx.strokeStyle = 'rgba(255,255,255,0.5)';
     ctx.lineWidth = 2;
     ctx.stroke();
+  }
+
+  // ataques del jefe
+  for (const p of bossProjectiles) {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+    ctx.fillStyle = p.color;
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur = 14;
+    ctx.fill();
+    ctx.shadowBlur = 0;
   }
 
   // jefe: cuerpo (bloquea el paso) + artefacto (lo que hay que destruir)
