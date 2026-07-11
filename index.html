@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="gate-pending">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
@@ -116,6 +116,54 @@
   @media (prefers-reduced-motion: reduce){
     .logo,.eyebrow,h1,.sub,.card{animation:none;opacity:1;transform:none;}
   }
+
+  /* gate: mientras se resuelve la identidad, el contenido queda oculto (sin flash) */
+  .gate-pending .wrap{display:none;}
+
+  .whoami-pill{
+    display:flex;align-items:center;gap:8px;
+    font-family:ui-monospace,"SF Mono","Cascadia Code",monospace;
+    font-size:11px;color:var(--ink-dim);letter-spacing:.03em;
+    margin-top:18px;
+    opacity:0;transform:translateY(6px);
+    animation:rise .6s ease .24s forwards;
+  }
+  .whoami-pill b{color:var(--ink);font-weight:700;}
+  .whoami-pill a{color:var(--ink-dim);text-decoration:underline;cursor:pointer;}
+  .whoami-pill a:hover{color:var(--ink);}
+
+  .gate-overlay{
+    position:fixed;inset:0;z-index:80;
+    background:var(--bg);
+    display:flex;align-items:center;justify-content:center;
+    padding:20px;
+  }
+  .gate-card{
+    width:100%;max-width:360px;
+    background:var(--bg-elev);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:28px 24px;
+    display:flex;flex-direction:column;gap:14px;
+    text-align:center;
+  }
+  .gate-card h2{font-size:17px;font-weight:800;letter-spacing:-0.01em;}
+  .gate-card p{font-size:13px;color:var(--ink-dim);line-height:1.55;text-align:left;}
+  .gate-card p b{color:var(--ink);}
+  .gate-input{
+    width:100%;padding:12px 14px;border-radius:10px;
+    background:#08080c;border:1px solid var(--line);color:var(--ink);
+    font-size:14px;font-family:inherit;
+  }
+  .gate-input:focus{outline:none;border-color:#6c7a89;}
+  .gate-hint{font-size:10.5px;color:var(--ink-dim);text-align:left;margin-top:-8px;}
+  .gate-error{font-size:12px;color:#ff6b6b;min-height:16px;}
+  .gate-btn{
+    background:var(--ink);color:#0b0b10;border:none;border-radius:10px;
+    padding:13px;font-weight:700;font-size:14px;cursor:pointer;
+    font-family:inherit;
+  }
+  .gate-btn:active{transform:scale(0.98);}
 </style>
 </head>
 <body>
@@ -125,11 +173,16 @@
       <div class="eyebrow">colección</div>
       <h1>Elegí un juego</h1>
       <p class="sub">Prototipos jugables, uno a la vez. Se van sumando acá.</p>
+      <div class="whoami-pill" id="whoamiPill" style="display:none;">
+        <span>jugando como <b id="whoamiName"></b></span>
+        <a id="switchUserLink">cambiar</a>
+      </div>
     </header>
 
     <div class="grid" id="grid"></div>
   </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 /* ============================================================
    Para sumar un juego nuevo: agregar un objeto a este array.
@@ -296,6 +349,113 @@ GAMES.forEach((game, i) => {
   };
   requestAnimationFrame(setup);
 });
+
+// ============================================================
+// Identidad — se crea acá, una sola vez. Los juegos solo la leen
+// desde localStorage (mismo dominio, misma clave) y la validan
+// contra el servidor cada vez que entrás a jugar.
+// ============================================================
+const SUPABASE_URL = 'https://rabnyiyiaxjhfwlqmnfq.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhYm55aXlpYXhqaGZ3bHFtbmZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1MzMyMDUsImV4cCI6MjA5OTEwOTIwNX0.CwPQV0GINIa_slIqk1DReCFzstdnkeALbaDpsLf8WH0';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const ME_KEY = 'site_me';
+
+const params = new URLSearchParams(location.search);
+const nextUrl = params.get('next');
+const reauth = params.get('reauth') === '1';
+
+const whoamiPill = document.getElementById('whoamiPill');
+const whoamiNameEl = document.getElementById('whoamiName');
+const switchUserLink = document.getElementById('switchUserLink');
+
+function revealHub(name){
+  if(name){
+    whoamiNameEl.textContent = name;
+    whoamiPill.style.display = 'flex';
+  }
+  document.documentElement.classList.remove('gate-pending');
+}
+
+function showGate(prefillError){
+  const overlay = document.createElement('div');
+  overlay.className = 'gate-overlay';
+  overlay.innerHTML = `
+    <div class="gate-card">
+      <h2>Ingresá tu nombre y PIN</h2>
+      <p><b>¿Ya jugaste antes?</b> Escribí el mismo nombre y PIN que usaste la última vez.<br><br><b>¿Primera vez?</b> Elegí un nombre y un PIN de 4 dígitos — quedan reservados para vos y valen para todos los juegos de acá.</p>
+      <input class="gate-input" id="gateName" maxlength="14" placeholder="Tu nombre" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false">
+      <input class="gate-input" id="gatePin" maxlength="4" placeholder="PIN · 4 dígitos" inputmode="numeric" pattern="[0-9]*" autocomplete="off">
+      <div class="gate-hint">Solo números, 4 dígitos.</div>
+      <div class="gate-error" id="gateError">${prefillError || ''}</div>
+      <button class="gate-btn" id="gateBtn">Entrar</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  const nameInput = document.getElementById('gateName');
+  const pinInput = document.getElementById('gatePin');
+  const errorEl = document.getElementById('gateError');
+  nameInput.focus();
+  pinInput.addEventListener('input', ()=>{
+    pinInput.value = pinInput.value.replace(/[^0-9]/g,'').slice(0,4);
+  });
+
+  let submitting = false;
+  const confirmEntry = async ()=>{
+    if(submitting) return;
+    const name = (nameInput.value || '').trim().slice(0,14);
+    const pin = pinInput.value.trim();
+    if(!name){ errorEl.textContent = 'Poné un nombre.'; return; }
+    if(!/^[0-9]{4}$/.test(pin)){ errorEl.textContent = 'El PIN tiene que ser de 4 números.'; return; }
+
+    submitting = true;
+    errorEl.textContent = '';
+    try{
+      const { error } = await sb.rpc('register_or_auth', { p_name: name, p_pin: pin });
+      if(error) throw error;
+      try{ localStorage.setItem(ME_KEY, JSON.stringify({name, pin})); }catch(e){ /* sigue sin persistir */ }
+      overlay.remove();
+      if(nextUrl){ location.href = nextUrl; return; }
+      revealHub(name);
+    }catch(e){
+      errorEl.textContent = (e && e.message) ? e.message : 'No se pudo validar. Probá de nuevo.';
+    }finally{
+      submitting = false;
+    }
+  };
+  document.getElementById('gateBtn').onclick = confirmEntry;
+  pinInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') confirmEntry(); });
+  nameInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') pinInput.focus(); });
+}
+
+async function initIdentity(){
+  let stored = null;
+  try{
+    const raw = localStorage.getItem(ME_KEY);
+    if(raw) stored = JSON.parse(raw);
+  }catch(e){ /* no había usuario guardado */ }
+
+  if(stored && stored.name && stored.pin){
+    try{
+      const { error } = await sb.rpc('register_or_auth', { p_name: stored.name, p_pin: stored.pin });
+      if(error) throw error;
+      if(nextUrl){ location.href = nextUrl; return; }
+      revealHub(stored.name);
+      return;
+    }catch(e){
+      try{ localStorage.removeItem(ME_KEY); }catch(e2){}
+      showGate('Tu sesión guardada ya no es válida. Iniciá de nuevo.');
+      return;
+    }
+  }
+  showGate(reauth ? 'Iniciá sesión de nuevo para seguir jugando.' : null);
+}
+
+switchUserLink.addEventListener('click', ()=>{
+  try{ localStorage.removeItem(ME_KEY); }catch(e){}
+  location.reload();
+});
+
+initIdentity();
 </script>
 </body>
 </html>
