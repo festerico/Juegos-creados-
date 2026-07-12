@@ -439,12 +439,16 @@ function startBossApproach() {
 function spawnBoss() {
   const type = BOSS_TYPES[bossIndex % BOSS_TYPES.length];
   bossIndex++;
+  // el casco del tiburón sobresale bastante más a los costados (aletas incluidas)
+  // que el resto de los artefactos, así que su área de impacto es más ancha que alta
+  const wideArtifact = type.key === 'shark';
   boss = {
     type,
     x: W/2, y: -100,
     homeY: H * 0.26,
     r: 46,
-    artifactR: 24,
+    artifactRx: wideArtifact ? 38 : 24,
+    artifactRy: wideArtifact ? 20 : 24,
     hp: type.hp, maxHp: type.hp,
     phase: 'entering',
     t: 0,
@@ -912,8 +916,10 @@ function update(dt) {
       }
     }
     if (!hit && boss && boss.phase === 'fighting') {
-      const dArt = Math.hypot(boss.x - b.x, boss.y - b.y);
-      if (dArt < boss.artifactR + 9) {
+      const dx = b.x - boss.x, dy = b.y - boss.y;
+      const ex = dx / (boss.artifactRx + 9);
+      const ey = dy / (boss.artifactRy + 9);
+      if (ex*ex + ey*ey < 1) {
         // le pegó al artefacto: ahí sí duele
         boss.hp--;
         boss.hitFlash = 10;
@@ -926,7 +932,7 @@ function update(dt) {
         } else {
           updateBossBar();
         }
-      } else if (dArt < boss.r) {
+      } else if (Math.hypot(dx, dy) < boss.r) {
         // le pegó al cuerpo, no al artefacto: rebota sin hacer daño
         burst(b.x, b.y, hexToRgb(boss.type.color), 6);
         hit = true;
@@ -1260,7 +1266,9 @@ function drawBossBody(b) {
 function drawBossArtifact(b) {
   const type = b.type;
   const pulse = 1 + Math.sin(b.t * 0.08) * 0.08;
-  const ar = b.artifactR * pulse;
+  const rx = b.artifactRx * pulse;
+  const ry = b.artifactRy * pulse;
+  const ar = rx; // ayuda para las formas que son circulares (rx === ry en esos casos)
   ctx.save();
   ctx.translate(b.x, b.y);
   ctx.fillStyle = type.artifactColor;
@@ -1270,12 +1278,25 @@ function drawBossArtifact(b) {
   ctx.shadowBlur = 16;
 
   if (type.artifact === 'casco') {
+    // dos aletas amarillas que sobresalen a los costados: marcan el ancho
+    // real del área donde hay que pegarle (más ancha que alta)
     ctx.beginPath();
-    ctx.arc(0, 0, ar, Math.PI, 0);
-    ctx.lineTo(ar, ar*0.3); ctx.lineTo(-ar, ar*0.3);
+    ctx.moveTo(-rx*0.5, -ry*0.15);
+    ctx.lineTo(-rx*1.05, -ry*0.75);
+    ctx.lineTo(-rx*0.62, ry*0.55);
     ctx.closePath(); ctx.fill(); ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(-ar*0.75, -ar*0.1); ctx.lineTo(ar*0.75, -ar*0.1);
+    ctx.moveTo(rx*0.5, -ry*0.15);
+    ctx.lineTo(rx*1.05, -ry*0.75);
+    ctx.lineTo(rx*0.62, ry*0.55);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    // domo central del casco
+    ctx.beginPath();
+    ctx.ellipse(0, -ry*0.05, rx*0.62, ry, 0, Math.PI, 0);
+    ctx.lineTo(rx*0.62, ry*0.4); ctx.lineTo(-rx*0.62, ry*0.4);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-rx*0.45, -ry*0.15); ctx.lineTo(rx*0.45, -ry*0.15);
     ctx.strokeStyle = '#1c2a33'; ctx.lineWidth = 3; ctx.stroke();
   } else if (type.artifact === 'cápsula') {
     ctx.beginPath();
