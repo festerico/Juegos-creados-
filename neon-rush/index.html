@@ -13,15 +13,19 @@
   }catch(e){ /* si localStorage no está disponible, se deja pasar */ }
 })();
 </script>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Neon Rush</title>
 <link rel="icon" type="image/png" href="data:image/png;base64,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">
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body {
-    width: 100%; height: 100%;
+    width: 100%; height: 100%; height: 100dvh;
     background: #05050a;
     overflow: hidden;
+    overscroll-behavior: none;
     font-family: 'Segoe UI', system-ui, sans-serif;
     touch-action: none;
   }
@@ -36,12 +40,15 @@
     touch-action: none;
   }
   #hud {
-    position: absolute; top: 14px; left: 14px; right: 14px;
+    position: absolute;
+    top: calc(14px + env(safe-area-inset-top));
+    left: calc(14px + env(safe-area-inset-left));
+    right: calc(14px + env(safe-area-inset-right));
     display: flex; justify-content: space-between; align-items: flex-start;
     color: #eafcff; pointer-events: none;
     font-variant-numeric: tabular-nums;
   }
-  #score { font-size: 28px; font-weight: 800; letter-spacing: 1px;
+  #score { font-size: clamp(20px, 6vw, 28px); font-weight: 800; letter-spacing: 1px;
     text-shadow: 0 0 12px rgba(0,255,225,0.8); }
   #combo { font-size: 14px; color: #ffd166; opacity: 0; transition: opacity .15s;
     text-shadow: 0 0 10px rgba(255,209,102,0.8); margin-top: 2px; }
@@ -50,7 +57,10 @@
     background: #ff3d6a; box-shadow: 0 0 10px #ff3d6a; }
   .life.lost { background: #2a2a35; box-shadow: none; }
   #pauseBtn {
-    position: absolute; top: 14px; right: 14px; margin-top: 40px;
+    position: absolute;
+    top: calc(14px + env(safe-area-inset-top));
+    right: calc(14px + env(safe-area-inset-right));
+    margin-top: 40px;
     background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.2);
     color: #eafcff; width: 42px; height: 42px; border-radius: 50%;
     font-size: 18px; cursor: pointer; pointer-events: auto;
@@ -63,16 +73,51 @@
   #ammo .dot { width: 10px; height: 10px; border-radius: 50%;
     background: #ff5c3d; box-shadow: 0 0 8px #ff5c3d; }
   #shootBtn {
-    position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%);
-    width: 74px; height: 74px; border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, #ff8a5c, #ff3d3d);
+    position: absolute;
+    bottom: calc(26px + env(safe-area-inset-bottom));
+    right: calc(26px + env(safe-area-inset-right));
+    width: clamp(64px, 16vw, 78px); height: clamp(64px, 16vw, 78px); border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, rgba(255,138,92,0.55), rgba(255,61,61,0.55));
     border: 2px solid rgba(255,255,255,0.35);
     color: #fff; font-size: 12px; font-weight: 800; letter-spacing: 1px;
-    box-shadow: 0 0 22px rgba(255,61,61,0.55); cursor: pointer;
+    box-shadow: 0 0 22px rgba(255,61,61,0.4); cursor: pointer;
     pointer-events: auto; user-select: none;
+    backdrop-filter: blur(3px);
   }
-  #shootBtn:active { transform: translateX(-50%) scale(0.9); }
+  #shootBtn:active { transform: scale(0.9); }
   #shootBtn:disabled { opacity: 0.3; box-shadow: none; }
+
+  /* Controles táctiles de movimiento: solo aparecen en pantallas táctiles
+     (tablets/celulares), semi-transparentes para no tapar la acción. */
+  #dpad {
+    position: absolute;
+    bottom: calc(26px + env(safe-area-inset-bottom));
+    left: calc(22px + env(safe-area-inset-left));
+    display: none;
+    gap: 14px;
+    pointer-events: none;
+  }
+  @media (hover: none) and (pointer: coarse) {
+    #dpad.hidden { display: none; }
+    #dpad { display: flex; }
+  }
+  .dpad-btn {
+    width: clamp(58px, 15vw, 72px); height: clamp(58px, 15vw, 72px);
+    border-radius: 50%;
+    background: rgba(234,252,255,0.10);
+    border: 1.5px solid rgba(234,252,255,0.28);
+    color: rgba(234,252,255,0.85);
+    font-size: clamp(22px, 6vw, 28px);
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: auto; user-select: none; cursor: pointer;
+    backdrop-filter: blur(3px);
+    transition: background .1s ease, transform .1s ease;
+  }
+  .dpad-btn:active, .dpad-btn.pressed {
+    background: rgba(0,255,240,0.22);
+    border-color: rgba(0,255,240,0.5);
+    transform: scale(0.92);
+  }
   #overdriveBanner {
     position: absolute; top: 70px; left: 50%; transform: translateX(-50%);
     font-size: 15px; font-weight: 800; letter-spacing: 2px;
@@ -122,7 +167,9 @@
     position: absolute; inset: 0;
     background: rgba(5,5,10,0.88);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    text-align: center; color: #eafcff; gap: 18px; padding: 20px;
+    text-align: center; color: #eafcff; gap: 18px;
+    padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+    overflow-y: auto;
   }
   .hidden { display: none !important; }
   .title {
@@ -199,6 +246,10 @@
   </div>
   <button id="pauseBtn" class="hidden">❚❚</button>
   <button id="shootBtn" class="hidden">DISPARAR</button>
+  <div id="dpad" class="hidden">
+    <div class="dpad-btn" id="leftBtn">◀</div>
+    <div class="dpad-btn" id="rightBtn">▶</div>
+  </div>
   <div id="overdriveBanner" class="hidden">¡A TODA VELOCIDAD! x2</div>
   <div id="bossBanner" class="hidden">⚠ JEFE APROXIMÁNDOSE ⚠</div>
   <div id="bossHud" class="hidden">
@@ -209,9 +260,9 @@
 
   <div id="startScreen" class="overlay">
     <div class="title">NEON RUSH</div>
-    <div class="subtitle">Esquivá los picos rojos (mirá el aviso ⌄ antes de que aparezcan) y recolectá orbes cian y dorados. Los orbes blancos "chispa" caen rápido y valen el triple: hay que reaccionar ya. De vez en cuando el juego entra en modo overdrive: todo se acelera y los puntos valen el doble. La bolita roja te carga un disparo (botón DISPARAR o espacio). Cada tanto vas a ver un planeta bajando desde arriba: cuando llega a la mitad de la pantalla, aparece un jefe que ataca y hay que esquivar. Su cuerpo te hace daño si lo tocás — dispará a su artefacto (el brillo dorado en el centro) para destruirlo.</div>
+    <div class="subtitle">Esquivá los picos rojos (mirá el aviso ⌄ antes de que aparezcan) y recolectá orbes cian y dorados. Los orbes blancos "chispa" caen rápido y valen el triple: hay que reaccionar ya. De vez en cuando el juego entra en modo overdrive: todo se acelera y los puntos valen el doble. La bolita roja te carga un disparo, y la dorada más grande te carga 3 de una (botón DISPARAR o espacio). Cada tanto vas a ver un planeta bajando desde arriba: cuando llega a la mitad de la pantalla, aparece un jefe que ataca y hay que esquivar. Su cuerpo te hace daño si lo tocás — dispará a su artefacto (el brillo dorado en el centro) para destruirlo.</div>
     <button id="startBtn" class="action">COMENZAR</button>
-    <div class="hint">Mové el mouse o el dedo · flechas / A-D también funcionan · Espacio para disparar</div>
+    <div class="hint">Mové el mouse o el dedo · flechas / A-D también funcionan · Espacio o botón DISPARAR · en celular/tablet usá los botones ◀ ▶ y DISPARAR</div>
   </div>
 
   <div id="pauseScreen" class="overlay hidden">
@@ -260,8 +311,12 @@ const bestScoreEl = document.getElementById('bestScore');
 const ammoEl = document.getElementById('ammo');
 const ammoCountEl = document.getElementById('ammoCount');
 const shootBtn = document.getElementById('shootBtn');
+const dpad = document.getElementById('dpad');
+const leftBtn = document.getElementById('leftBtn');
+const rightBtn = document.getElementById('rightBtn');
 const overdriveBanner = document.getElementById('overdriveBanner');
 const whoamiNameEl = document.getElementById('whoamiName');
+const whoamiEl = document.getElementById('whoami');
 const switchUserLink = document.getElementById('switchUserLink');
 const lbListEl = document.getElementById('lbListNR');
 const lbStatusEl = document.getElementById('lbStatusNR');
@@ -390,8 +445,9 @@ let bullets = [];
 let particles = [];
 let warnings = []; // señales de advertencia previas a un pico
 let score = 0, lives = 3, combo = 1, speedMul = 1, spawnTimer = 0, tPrev, shake = 0, targetX = 0;
+let inputMode = 'pointer'; // 'pointer' (mouse/touch) o 'keyboard': para que no se peleen entre sí
 let ammo = 0;
-const MAX_AMMO = 4;
+const MAX_AMMO = 6;
 let powerupTimer = 0;
 let reflexTimer = 0;
 let overdrive = 0;         // frames restantes del modo rápido
@@ -406,7 +462,7 @@ function scoreMul() { return overdrive > 0 ? 2 : 1; }
 // destruirle el artefacto que lo mantiene en el espacio.
 // ============================================================
 const BOSS_TYPES = [
-  { key:'shark',    name:'Tiburón espacial',   color:'#8fd6ff', artifact:'casco',   artifactColor:'#ffd166', hp:10 },
+  { key:'shark',    name:'Tiburón espacial',   color:'#8fd6ff', artifact:'casco',   artifactColor:'#ffd166', hp:6 },
   { key:'octopus',  name:'Pulpo espacial',     color:'#c77dff', artifact:'cápsula', artifactColor:'#ffd166', hp:12 },
   { key:'squid',    name:'Calamar espacial',   color:'#ff6fb0', artifact:'tanque',  artifactColor:'#ffd166', hp:14 },
   { key:'seahorse', name:'Caballito espacial', color:'#7fffb0', artifact:'burbuja', artifactColor:'#ffd166', hp:16 },
@@ -447,8 +503,8 @@ function spawnBoss() {
     x: W/2, y: -100,
     homeY: H * 0.26,
     r: 46,
-    artifactRx: wideArtifact ? 38 : 24,
-    artifactRy: wideArtifact ? 20 : 24,
+    artifactRx: wideArtifact ? 44 : 24,
+    artifactRy: wideArtifact ? 26 : 24,
     hp: type.hp, maxHp: type.hp,
     phase: 'entering',
     t: 0,
@@ -543,6 +599,7 @@ function initGame() {
   comboEl.style.opacity = 0;
   ammoEl.classList.remove('hidden');
   shootBtn.classList.remove('hidden');
+  dpad.classList.remove('hidden');
   overdriveBanner.classList.add('hidden');
   bossBanner.classList.add('hidden');
   bossHud.classList.add('hidden');
@@ -565,20 +622,49 @@ function setTargetFromClientX(clientX) {
   const rect = canvas.getBoundingClientRect();
   targetX = clientX - rect.left;
 }
-canvas.addEventListener('mousemove', e => { if (state === 'playing') setTargetFromClientX(e.clientX); });
+canvas.addEventListener('mousemove', e => {
+  if (state === 'playing') { inputMode = 'pointer'; setTargetFromClientX(e.clientX); }
+});
 canvas.addEventListener('touchmove', e => {
-  if (state === 'playing') { setTargetFromClientX(e.touches[0].clientX); e.preventDefault(); }
+  if (state === 'playing') { inputMode = 'pointer'; setTargetFromClientX(e.touches[0].clientX); e.preventDefault(); }
 }, { passive: false });
 canvas.addEventListener('touchstart', e => {
-  if (state === 'playing') { setTargetFromClientX(e.touches[0].clientX); e.preventDefault(); }
+  if (state === 'playing') { inputMode = 'pointer'; setTargetFromClientX(e.touches[0].clientX); e.preventDefault(); }
 }, { passive: false });
 
 const keys = {};
+const ARROW_KEYS = ['arrowleft', 'arrowright', 'a', 'd'];
 window.addEventListener('keydown', e => {
   keys[e.key.toLowerCase()] = true;
+  if (ARROW_KEYS.includes(e.key.toLowerCase())) inputMode = 'keyboard';
   if (e.key === ' ') { e.preventDefault(); shoot(); }
 });
 window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+
+// D-pad táctil: dispara las mismas teclas virtuales que ya usa el movimiento,
+// así reutiliza toda la lógica de inputMode sin duplicar nada.
+function bindDpadButton(el, key) {
+  const press = e => {
+    e.preventDefault();
+    keys[key] = true;
+    inputMode = 'keyboard';
+    el.classList.add('pressed');
+  };
+  const release = e => {
+    if (e) e.preventDefault();
+    keys[key] = false;
+    el.classList.remove('pressed');
+  };
+  el.addEventListener('touchstart', press, { passive: false });
+  el.addEventListener('touchend', release, { passive: false });
+  el.addEventListener('touchcancel', release, { passive: false });
+  // por si se usa con mouse en una tablet con puntero/trackpad
+  el.addEventListener('mousedown', press);
+  el.addEventListener('mouseup', release);
+  el.addEventListener('mouseleave', release);
+}
+bindDpadButton(leftBtn, 'arrowleft');
+bindDpadButton(rightBtn, 'arrowright');
 
 function shoot() {
   if (state !== 'playing' || ammo <= 0) return;
@@ -659,7 +745,14 @@ function makeReflexOrb(x) {
   return { x, y: -20, r: 12, speed: (4.3 + Math.random()*0.9) * curSpeedMul(), reflex: true, pulse: 0 };
 }
 function makePowerup() {
-  return { x: 40 + Math.random() * (W - 80), y: -20, r: 13, speed: 2.6 * Math.min(speedMul, 1.6), pulse: 0 };
+  // una de cada cuatro es la versión grande/dorada: da 3 disparos en vez de 1
+  const big = Math.random() < 0.28;
+  return {
+    x: 40 + Math.random() * (W - 80), y: -20,
+    r: big ? 17 : 13,
+    speed: (big ? 2.2 : 2.6) * Math.min(speedMul, 1.6),
+    pulse: 0, big
+  };
 }
 
 function burst(x, y, color, n) {
@@ -687,6 +780,8 @@ function gameOver() {
   pauseBtn.classList.add('hidden');
   ammoEl.classList.add('hidden');
   shootBtn.classList.add('hidden');
+  dpad.classList.add('hidden');
+  whoamiEl.classList.remove('hidden');
   overdriveBanner.classList.add('hidden');
   bossBanner.classList.add('hidden');
   bossHud.classList.add('hidden');
@@ -737,12 +832,17 @@ function update(dt) {
 
   // player movement (un poco de inercia para que no sea instantáneo)
   const prevX = player.x;
-  const dx = targetX - player.x;
-  player.x += dx * 0.14 * dt;
-  if (keys['arrowleft'] || keys['a']) player.x -= 6.5 * dt;
-  if (keys['arrowright'] || keys['d']) player.x += 6.5 * dt;
+  if (inputMode === 'pointer') {
+    const dx = targetX - player.x;
+    player.x += dx * 0.14 * dt;
+    targetX = Math.max(player.r + 4, Math.min(W - player.r - 4, targetX));
+  } else {
+    // modo teclado: el mouse no interfiere para nada mientras se usan las flechas
+    if (keys['arrowleft'] || keys['a']) player.x -= 6.5 * dt;
+    if (keys['arrowright'] || keys['d']) player.x += 6.5 * dt;
+    targetX = player.x; // así, si volvés al mouse después, no pega un salto brusco
+  }
   player.x = Math.max(player.r + 4, Math.min(W - player.r - 4, player.x));
-  targetX = Math.max(player.r + 4, Math.min(W - player.r - 4, targetX));
 
   // inclinación de la nave según hacia dónde se mueve (banking)
   const vx = (player.x - prevX) / Math.max(dt, 0.001);
@@ -893,9 +993,9 @@ function update(dt) {
     const dist = Math.hypot(p.x - player.x, p.y - player.y);
     if (dist < p.r + player.r) {
       powerups.splice(i,1);
-      ammo = Math.min(MAX_AMMO, ammo + 1);
+      ammo = Math.min(MAX_AMMO, ammo + (p.big ? 3 : 1));
       updateAmmo();
-      burst(p.x, p.y, '255,92,61', 18);
+      burst(p.x, p.y, p.big ? '255,209,102' : '255,92,61', p.big ? 26 : 18);
     }
   }
 
@@ -916,9 +1016,12 @@ function update(dt) {
       }
     }
     if (!hit && boss && boss.phase === 'fighting') {
+      // el mismo pulso que usa drawBossArtifact() para que el hitbox
+      // coincida siempre con lo que se ve en pantalla (aletas incluidas)
+      const pulse = 1 + Math.sin(boss.t * 0.08) * 0.08;
       const dx = b.x - boss.x, dy = b.y - boss.y;
-      const ex = dx / (boss.artifactRx + 9);
-      const ey = dy / (boss.artifactRy + 9);
+      const ex = dx / (boss.artifactRx * pulse + 9);
+      const ey = dy / (boss.artifactRy * pulse + 9);
       if (ex*ex + ey*ey < 1) {
         // le pegó al artefacto: ahí sí duele
         boss.hp--;
@@ -1065,19 +1168,33 @@ function draw() {
     ctx.restore();
   }
 
-  // powerups (bolita roja de disparo)
+  // powerups (bolita roja de disparo, o dorada = x3 disparos)
   for (const p of powerups) {
     const pulse = 1 + Math.sin(p.pulse) * 0.2;
+    const col = p.big ? '#ffd166' : '#ff5c3d';
     ctx.beginPath();
     ctx.arc(p.x, p.y, p.r * pulse, 0, Math.PI*2);
-    ctx.fillStyle = '#ff5c3d';
-    ctx.shadowColor = '#ff5c3d';
+    ctx.fillStyle = col;
+    ctx.shadowColor = col;
     ctx.shadowBlur = 20;
     ctx.fill();
     ctx.shadowBlur = 0;
     ctx.strokeStyle = 'rgba(255,255,255,0.5)';
     ctx.lineWidth = 2;
     ctx.stroke();
+    if (p.big) {
+      // anillo extra y "x3" para que se distinga claramente de la bolita normal
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r * pulse + 5, 0, Math.PI*2);
+      ctx.strokeStyle = 'rgba(255,209,102,0.55)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.fillStyle = '#1c2a33';
+      ctx.font = 'bold 12px Segoe UI, system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('×3', p.x, p.y + 1);
+    }
   }
 
   // ataques del jefe
@@ -1342,6 +1459,7 @@ function startGame() {
   overScreen.classList.add('hidden');
   pauseScreen.classList.add('hidden');
   pauseBtn.classList.remove('hidden');
+  whoamiEl.classList.add('hidden'); // en mobile ocupa el mismo lugar que el D-pad
 }
 
 document.getElementById('startBtn').addEventListener('click', startGame);
