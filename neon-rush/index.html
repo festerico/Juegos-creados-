@@ -500,6 +500,7 @@ function spawnBoss() {
   const ARTIFACT_SIZE = {
     shark:   { rx: 44, ry: 26 }, // casco + aletas bien anchas a los costados
     octopus: { rx: 40, ry: 38 }, // cápsula + antenas, para que los tentáculos no tapen todo
+    squid:   { rx: 48, ry: 27 }, // tanque + alas a los costados, afuera del cuerpo angosto
   };
   const size = ARTIFACT_SIZE[type.key] || { rx: 24, ry: 24 };
   boss = {
@@ -1449,11 +1450,26 @@ function drawBossArtifact(b) {
     ctx.beginPath(); ctx.moveTo(-ar*0.7, 0); ctx.lineTo(ar*0.7, 0);
     ctx.strokeStyle = '#1c2a33'; ctx.lineWidth = 2; ctx.stroke();
   } else if (type.artifact === 'tanque') {
+    // dos alas que sobresalen bien afuera del cuerpo angosto del calamar:
+    // marcan que el área de golpe es mucho más ancha que el tanque solo
     ctx.beginPath();
-    ctx.rect(-ar*0.55, -ar, ar*1.1, ar*2);
+    ctx.moveTo(-rx*0.5, -ry*0.6);
+    ctx.lineTo(-rx*0.98, -ry*0.35);
+    ctx.lineTo(-rx*0.98, ry*0.35);
+    ctx.lineTo(-rx*0.5, ry*0.6);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(rx*0.5, -ry*0.6);
+    ctx.lineTo(rx*0.98, -ry*0.35);
+    ctx.lineTo(rx*0.98, ry*0.35);
+    ctx.lineTo(rx*0.5, ry*0.6);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    // el tanque en sí, centrado, integrado con las alas
+    ctx.beginPath();
+    ctx.rect(-ry*0.6, -ry, ry*1.2, ry*2);
     ctx.fill(); ctx.stroke();
     ctx.beginPath();
-    ctx.ellipse(0, -ar, ar*0.55, ar*0.22, 0, 0, Math.PI*2);
+    ctx.ellipse(0, -ry, ry*0.6, ry*0.24, 0, 0, Math.PI*2);
     ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.fill();
   } else if (type.artifact === 'burbuja') {
     ctx.beginPath();
