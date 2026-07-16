@@ -495,16 +495,20 @@ function startBossApproach() {
 function spawnBoss() {
   const type = BOSS_TYPES[bossIndex % BOSS_TYPES.length];
   bossIndex++;
-  // el casco del tiburón sobresale bastante más a los costados (aletas incluidas)
-  // que el resto de los artefactos, así que su área de impacto es más ancha que alta
-  const wideArtifact = type.key === 'shark';
+  // el área de impacto de cada artefacto varía según cuánto sobresale
+  // de su cuerpo (aletas, antenas, etc). Por defecto es un círculo de 24.
+  const ARTIFACT_SIZE = {
+    shark:   { rx: 44, ry: 26 }, // casco + aletas bien anchas a los costados
+    octopus: { rx: 40, ry: 38 }, // cápsula + antenas, para que los tentáculos no tapen todo
+  };
+  const size = ARTIFACT_SIZE[type.key] || { rx: 24, ry: 24 };
   boss = {
     type,
     x: W/2, y: -100,
     homeY: H * 0.26,
     r: 46,
-    artifactRx: wideArtifact ? 44 : 24,
-    artifactRy: wideArtifact ? 26 : 24,
+    artifactRx: size.rx,
+    artifactRy: size.ry,
     hp: type.hp, maxHp: type.hp,
     phase: 'entering',
     t: 0,
@@ -1416,6 +1420,25 @@ function drawBossArtifact(b) {
     ctx.moveTo(-rx*0.45, -ry*0.15); ctx.lineTo(rx*0.45, -ry*0.15);
     ctx.strokeStyle = '#1c2a33'; ctx.lineWidth = 3; ctx.stroke();
   } else if (type.artifact === 'cápsula') {
+    // antenas que sobresalen bien arriba de los tentáculos: marcan que el área
+    // de golpe es mucho más grande que el domo central, así las balas rectas
+    // no quedan siempre bloqueadas por los tentáculos
+    ctx.lineWidth = 3.5; ctx.lineCap = 'round'; ctx.strokeStyle = type.artifactColor;
+    ctx.beginPath();
+    ctx.moveTo(-ar*0.28, -ar*0.65);
+    ctx.quadraticCurveTo(-ar*0.5, -ar*0.9, -ar*0.45, -ar*1.05);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(-ar*0.45, -ar*1.05, ar*0.12, 0, Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(ar*0.28, -ar*0.65);
+    ctx.quadraticCurveTo(ar*0.5, -ar*0.9, ar*0.45, -ar*1.05);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(ar*0.45, -ar*1.05, ar*0.12, 0, Math.PI*2);
+    ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255,255,255,0.65)';
     ctx.beginPath();
     ctx.moveTo(0, -ar);
     ctx.quadraticCurveTo(ar, -ar, ar, 0);
