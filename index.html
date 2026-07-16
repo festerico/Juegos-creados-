@@ -217,6 +217,15 @@ const GAMES = [
     url: './neon-rush/',
     accent: '#00fff0',
     preview: 'particles'
+  },
+  {
+    id: 'skater-chase',
+    title: 'FUGA URBANA',
+    tagline: 'Saltá rampas y agachate bajo las vallas: no dejes que te atrapen.',
+    meta: ['runner', 'persecución'],
+    url: './skater-chase/',
+    accent: '#ffcb47',
+    preview: 'runner'
   }
 ];
 
@@ -287,6 +296,45 @@ const PREVIEWS = {
         ctx.fill();
       });
       ctx.shadowBlur = 0;
+      if(!reduceMotion) requestAnimationFrame(frame);
+    }
+    frame();
+  },
+
+  runner(ctx, w, h, accent){
+    const [r,g,b] = hexToRgb(accent);
+    const groundY = h * 0.72;
+    let jumpT = Math.random() * Math.PI;
+    function frame(){
+      ctx.clearRect(0,0,w,h);
+      // silueta de edificios
+      ctx.fillStyle = 'rgba(255,255,255,0.07)';
+      const n = 6;
+      for(let i=0;i<n;i++){
+        const bw = w/n;
+        const bh = 12 + ((i*37) % 42);
+        ctx.fillRect(i*bw, groundY-bh, bw-4, bh);
+      }
+      // calle
+      ctx.fillStyle = `rgba(${r},${g},${b},0.35)`;
+      ctx.fillRect(0, groundY, w, 2);
+      // corredor saltando en arco
+      if(!reduceMotion) jumpT += 0.055;
+      const cycle = jumpT % (Math.PI*2);
+      const jumpH = Math.max(0, Math.sin(cycle)) * (h*0.16);
+      const x = w * 0.3;
+      ctx.beginPath();
+      ctx.fillStyle = `rgba(${r},${g},${b},0.95)`;
+      ctx.shadowColor = accent;
+      ctx.shadowBlur = 8;
+      ctx.arc(x, groundY - 6 - jumpH, 4.5, 0, Math.PI*2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      // persecución: una luz roja detrás, siempre un paso atrás
+      ctx.beginPath();
+      ctx.fillStyle = 'rgba(255,59,59,0.55)';
+      ctx.arc(x - 24, groundY - 6, 3.5, 0, Math.PI*2);
+      ctx.fill();
       if(!reduceMotion) requestAnimationFrame(frame);
     }
     frame();
