@@ -1069,7 +1069,7 @@
         alerta = Math.max(0, alerta - 10);
         pushbackTimer = 1.4;
         throwFxTimer = 0.35;
-        scorePopup('¡LA ESQUIVÓ!', projectile.toX, projectile.toY - 20);
+        scorePopup('¡IMPACTO!', projectile.toX, projectile.toY - 20);
         projectile = null;
       }
     }
@@ -1217,7 +1217,8 @@
     if(flashT > 0 && Math.floor(flashT*20)%2===0){
       ctx.globalAlpha = 0.4;
     }
-    drawSkaterFigure(ctx, selectedChar, PLAYER_X, player.y, 1, player.ducking, player.jumping, player.animT);
+    const throwProgress = throwAnimTimer > 0 ? 1 - (throwAnimTimer/THROW_ANIM_DURATION) : 0;
+    drawSkaterFigure(ctx, selectedChar, PLAYER_X, player.y, 1, player.ducking, player.jumping, player.animT, throwProgress);
     ctx.restore();
 
     // medidor de impulso (aparece mientras mantenés agachado cargando)
